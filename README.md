@@ -27,7 +27,7 @@ pnpm dev:online
 
 Abra a URL local informada pelo Wrangler. Para desenvolvimento somente visual: `pnpm dev` (Vite); multiplayer exige Wrangler, pois Vite não implementa `/api/room`.
 
-PC: WASD/setas, arraste para olhar, Shift para correr, Espaço para pular/frear, E para veículo, M para mapa. No celular: joystick, arraste à direita e botões de ação.
+PC: WASD/setas, arraste para olhar, Shift para correr, Espaço para pular/frear, E para veículo, M para mapa, C para visão panorâmica. No celular: joystick, arraste à direita e botões de ação.
 
 ## Cloudflare
 
@@ -38,6 +38,8 @@ pnpm build
 pnpm exec wrangler login
 pnpm exec wrangler deploy
 ```
+
+Teste de integração com o servidor em execução: `node tests/multiplayer.mjs http://127.0.0.1:8787`.
 
 Também pode ser publicado por Workers Builds conectado ao repositório: comando de build `pnpm build`, deploy `npx wrangler deploy`, raiz do repositório e branch `main`. A primeira publicação aplica a migração SQLite `v1` para a classe `Room`. Não há segredos de aplicação no código.
 
