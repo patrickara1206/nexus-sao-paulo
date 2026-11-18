@@ -1,0 +1,3 @@
+import fs from 'node:fs/promises';import {NodeIO} from '@gltf-transform/core';import {ALL_EXTENSIONS} from '@gltf-transform/extensions';import {dedup,weld,simplify,prune} from '@gltf-transform/functions';import {MeshoptSimplifier} from 'meshoptimizer';
+await MeshoptSimplifier.ready;const io=new NodeIO().registerExtensions(ALL_EXTENSIONS);await fs.mkdir('public/assets/props',{recursive:true});
+for(const id of process.argv.slice(2)){const doc=await io.read(`../../work/polyhaven/${id}/model.gltf`);await doc.transform(dedup(),weld(),...(id==='tree_small_02'?[simplify({simplifier:MeshoptSimplifier,ratio:.012,error:.05})]:[]),prune());await io.write(`public/assets/props/${id}.glb`,doc);console.log(id,(await fs.stat(`public/assets/props/${id}.glb`)).size);}

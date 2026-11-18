@@ -1,0 +1,10 @@
+import * as T from 'three';
+import {TilesRenderer,WGS84_ELLIPSOID} from '3d-tiles-renderer/three';
+import {GoogleCloudAuthPlugin} from '3d-tiles-renderer/core/plugins';
+import {GLTFExtensionsPlugin} from '3d-tiles-renderer/three/plugins';
+import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
+export function referenceMatrix(lat=-23.5614,lon=-46.6559,height=760){const enu=WGS84_ELLIPSOID.getEastNorthUpFrame(T.MathUtils.degToRad(lat),T.MathUtils.degToRad(lon),height,new T.Matrix4());const basis=new T.Matrix4().makeRotationX(-Math.PI/2);return basis.multiply(enu.invert());}
+export async function createPhotorealCity(scene,camera,renderer,onStatus){const response=await fetch('/api/config',{cache:'no-store'});if(!response.ok)return {enabled:false,reason:'Configuração da cidade real indisponível.'};const config=await response.json();if(!config.maps?.enabled||!config.maps?.browserKey)return {enabled:false,reason:'Cidade fotogramétrica aguarda conexão do Google Maps Platform. Nenhuma cobrança foi ativada.'};
+ const tiles=new TilesRenderer('https://tile.googleapis.com/v1/3dtiles/root.json');tiles.registerPlugin(new GoogleCloudAuthPlugin({apiToken:config.maps.browserKey,autoRefreshToken:true}));const draco=new DRACOLoader().setDecoderPath('/assets/draco/');tiles.registerPlugin(new GLTFExtensionsPlugin({dracoLoader:draco,autoDispose:false}));tiles.group.matrixAutoUpdate=false;tiles.group.matrix.copy(referenceMatrix());tiles.group.matrixWorldNeedsUpdate=true;tiles.errorTarget=10;tiles.setCamera(camera);scene.add(tiles.group);let ready=false;tiles.addEventListener('load-model',()=>{ready=true;onStatus?.('Cidade real carregando por setores.');});tiles.addEventListener('load-error',()=>onStatus?.('Falha ao carregar a cidade real. Confira acesso e configuração do provedor.'));
+ return {enabled:true,get ready(){return ready;},tiles,update(){tiles.setResolutionFromRenderer(camera,renderer);tiles.update();},credits(){return tiles.getAttributions().filter(a=>a.type==='string').map(a=>a.value).filter(Boolean).join(' · ');},dispose(){scene.remove(tiles.group);tiles.dispose();draco.dispose();}};
+}

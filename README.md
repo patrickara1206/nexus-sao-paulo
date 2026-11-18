@@ -1,73 +1,80 @@
-# NEXUS — São Paulo, por dentro
+# NEXUS — São Paulo / Solo
 
-Protótipo jogável Web 3D para apresentar o conceito de um mundo aberto multiplayer inspirado em São Paulo. **Versão 0.1: exploração e direção artística inicial, não uma reprodução fotográfica da cidade.**
+**Versão 0.2: base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
 
-## O que está implementado
+O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
 
-- Terceira pessoa, personagem humano estilizado com caminhada animada, corrida e pulo.
-- Veículo controlável, câmera por arraste e recuperação para a Paulista.
-- Área inicial contínua: Paulista, Centro e Ibirapuera, com projeção local em metros reais e 6.133 trechos de vias importados do OpenStreetMap.
-- 71.985 contornos de edifícios distribuídos em 166 setores de 500 m; carregamento dos setores próximos ao jogador. 69.813 registros têm altura ou número de pavimentos informado. Alturas derivadas de pavimentos usam 3,1 m/pavimento; ausentes usam 12 m. Os contornos são reais do mapa, mas alturas, fachadas e materiais não equivalem a levantamento arquitetônico.
-- 12 pontos de descoberta com modelos próprios e estilizados: MASP, Casa das Rosas, Japan House, Copan, Itália, Theatro Municipal, Catedral da Sé, Estação da Luz, Ibirapuera, Oca, Auditório Ibirapuera e Monumento às Bandeiras. Dimensões e detalhes desses modelos são aproximações artísticas.
-- Prévias isoladas e autorais de São Caetano, São Bernardo, orla de Santos e Vila Belmiro. São estudos conceituais com âncoras geográficas aproximadas, não bairros completos nem plantas fiéis de seus edifícios/estádio. Use Mapa → Prévias da proposta para viajar.
-- Asfalto, sinalização central das vias principais, árvores, céu e nuvens, fachadas procedurais com janelas e sombras em qualidade alta.
-- Minimapa, atlas, destinos, progresso local, modo leve e controles de toque.
-- Salas WebSocket para até 16 jogadores com Cloudflare Durable Objects. Compartilha nome, posição, direção e modo a pé/veículo. Não usa jogadores falsos.
+## Implementado e utilizável
+
+- Criação e edição de personagem adulto: nome, gênero independente da apresentação corporal, morfologia, porte, altura, tom de pele, cabelo, cores das roupas e pelos corporais.
+- Base humana MakeHuman CC0 com 14.517 vértices e 26.756 triângulos, variação de morfologia e movimento procedural. Ainda precisa de rig e animações de produção, texturas de pele e roupas com geometria própria.
+- Preferência de pelos púbicos salva. **A região permanece coberta; não existe visualização íntima nesta versão.**
+- Exploração em terceira pessoa com câmera por arraste, caminhada, corrida, pulo e controles de toque.
+- NPCs locais com conversa e movimentação simples, sem pessoas online nem jogadores simulados.
+- Três histórias com objetivos, progressão, recompensa em moeda do jogo e proteção contra recompensa duplicada.
+- Modo livre sem progresso obrigatório de história.
+- Loja de roupas com compra/equipamento, guarda-roupa persistente e validação de saldo. Os conjuntos alteram as cores e os materiais; ainda não são peças de alfaiataria digital distintas.
+- Lanchonete com compra de refeição e recuperação de saúde; apartamento com descanso e acesso à personalização. Os três interiores são **ambientes de teste de mecânicas**, não interiores levantados de edifícios reais.
+- Mapa vetorial com posição do personagem e nome da rua atual, calculado sobre 6.133 trechos reais do OpenStreetMap. Na ausência da cidade real, a interface indica que se trata da referência geográfica do laboratório.
+- Perfil, saldo, peças compradas e missões salvos no navegador. Não há servidor de contas nem sincronização entre aparelhos.
+- Materiais fotográficos PBR e modelos CC0 de árvore, poste, banco e café em um laboratório separado. Esses objetos não são apresentados como levantamento de uma praça real de São Paulo.
+
+## Situação da cidade real
+
+A integração de transmissão de Google Maps Photorealistic 3D Tiles está implementada em `src/photoreal-city.js`, com georreferenciamento WGS84, decodificador Draco e atribuições de fonte. **Não foi ativada nem validada com a cidade real por falta de configuração autorizada do provedor.**
+
+Sem uma chave configurada, o jogo não faz chamadas ao serviço de mapas 3D e entra no laboratório de mecânicas, identificado claramente. Não substitui fachadas faltantes por edifícios inventados.
+
+O Centro Histórico está no escopo completo. O atlas já referencia Sé, Pátio do Colégio, São Bento, Anhangabaú, Theatro Municipal, República, Copan, Itália, Martinelli, Biblioteca Mário de Andrade, Luz e Pinacoteca. Essa lista **não prova que cada prédio, fachada, parque, rua ou interior foi reconstruído**. A cobertura e a resolução precisam ser inspecionadas com a fonte conectada.
+
+Fotogrametria é uma captura datada: não garante fachadas atuais, qualidade de perto, objetos separados, tráfego, colisões perfeitas ou interiores acessíveis. Esses itens exigem trabalho e validação adicionais. Os interiores de gameplay continuam separados dos imóveis reais até existir levantamento autorizado de cada um.
 
 ## Executar
 
-Requer Node.js 22+ e pnpm.
+Node.js 22+ e pnpm:
 
 ```sh
 pnpm install
 pnpm test
 pnpm build
-pnpm dev:online
+pnpm dev
 ```
 
-Abra a URL local informada pelo Wrangler. Para desenvolvimento somente visual: `pnpm dev` (Vite); multiplayer exige Wrangler, pois Vite não implementa `/api/room`.
+O Vite permite testar o personagem e o laboratório. Para testar o Worker e `/api/config`, use `pnpm dev:online` após o build.
 
-PC: WASD/setas, arraste para olhar, Shift para correr, Espaço para pular/frear, E para veículo, M para mapa, C para visão panorâmica. No celular: joystick, arraste à direita e botões de ação.
+WASD/setas para mover; Shift para correr; Espaço para pular; arraste para olhar; E para conversar/interagir; J para histórias; M para mapa; C para câmera panorâmica. Os pontos de serviço do laboratório ficam próximos ao início. O botão “Ir ao objetivo · teste” é exclusivo do laboratório e facilita validar os fluxos; não aparece no modo conectado à cidade real.
 
-## Cloudflare
+## Publicação
 
-O projeto usa **Workers Static Assets + Durable Objects**, reunindo o jogo e as salas no mesmo domínio. A configuração é `wrangler.jsonc`.
+Repositório: https://github.com/patrickara1206/nexus-sao-paulo
 
-```sh
-pnpm build
-pnpm exec wrangler login
-pnpm exec wrangler deploy
-```
+Hospedagem: https://nexus-sao-paulo.patrickara2006.workers.dev/
 
-Teste de integração com o servidor em execução: `node tests/multiplayer.mjs http://127.0.0.1:8787`.
+Cloudflare Workers Static Assets, com build automático conectado à branch `main`. Build `pnpm build`, publicação `npx wrangler deploy`. O endpoint `/api/room` responde 410: multiplayer foi desativado. A exportação mínima da classe `Room` existe somente para compatibilidade com a migração já aplicada na versão anterior; não cria novas salas.
 
-Também pode ser publicado por Workers Builds conectado ao repositório: comando de build `pnpm build`, deploy `npx wrangler deploy`, raiz do repositório e branch `main`. A primeira publicação aplica a migração SQLite `v1` para a classe `Room`. Não há segredos de aplicação no código.
+## Ativar a fonte real, quando autorizado
 
-## Fontes e licenças
+1. Usar um projeto próprio do Google Maps Platform; revisar requisitos de faturamento, termos, cobertura e cotas.
+2. Habilitar Map Tiles API e criar uma chave de **navegador**, limitada a essa API e aos referenciadores HTTPS do domínio do jogo. Nunca usar chave de conta de serviço ou credencial administrativa nesse campo.
+3. Configurar cotas rígidas apropriadas antes de qualquer teste. Alertas de orçamento não são limites automáticos de gasto.
+4. Inserir a chave em `GOOGLE_MAPS_BROWSER_KEY` nas variáveis do Worker, pelo painel ou mecanismo seguro de configuração. Não colocar em commits, documentos ou conversas.
+5. Publicar, testar o carregamento e inspecionar o alinhamento e a cobertura do trecho inicial e do Centro Histórico. Verificar requisitos adicionais de termos de uso e privacidade antes de abrir o modo fotogramétrico ao público.
 
-Dados de ruas e edifícios: **© OpenStreetMap contributors**, ODbL 1.0. A atribuição aparece no jogo. Veja [copyright](https://www.openstreetmap.org/copyright) e [licença ODbL](https://opendatacommons.org/licenses/odbl/1-0/).
+A chave de navegador precisa chegar ao cliente para autenticar pedidos de tiles; `/api/config` a fornece somente se configurada. As restrições de domínio e API são essenciais para esse tipo de chave. Atualmente a chave está ausente. Não foram ativados faturamento ou créditos do Google Cloud.
 
-- `src/streets.json`: subconjunto viário e metadados da consulta.
-- `public/data/buildings/`: banco derivado dos contornos e alturas; `manifest.json` contém data da base e totais. Esses arquivos são distribuídos sob ODbL 1.0.
-- `tools/import-osm.mjs` e `tools/tile-buildings.mjs`: conversores reproduzíveis para respostas Overpass `out geom`.
-- Não contém imagens extraídas de Street View, modelos do Google Earth, texturas fotográficas de terceiros nem logotipos oficiais de clubes. Modelos e materiais são autorais/procedurais.
-- Three.js, Vite, Wrangler e suas dependências mantêm suas próprias licenças.
+Não são feitos downloads em massa nem exportação de conteúdo Google. A base seria consumida por transmissão, com as atribuições em tela, conforme os requisitos do provedor. Fontes: [configuração](https://developers.google.com/maps/documentation/tile/get-api-key), [políticas](https://developers.google.com/maps/documentation/tile/policies), [preços e cotas](https://developers.google.com/maps/documentation/tile/usage-and-billing).
 
-## Limites desta entrega
+## Dados e licenças
 
-Sem interiores, pedestres/NPCs, trânsito, economia, construção, contas ou persistência de mundo no servidor. O relevo é uma superfície aproximada. Vias elevadas, túneis e níveis sobrepostos do OSM aparecem na mesma superfície; não constituem uma simulação completa de tráfego. Não foi feito levantamento de acessibilidade nem verificação rua a rua. Elementos temporários do mapa real podem estar desatualizados.
+Ruas e banco de contornos derivados do OpenStreetMap: © OpenStreetMap contributors, ODbL 1.0. O banco de 71.985 contornos, em 166 setores, continua no repositório como insumo de geografia/validação; **não é renderizado com fachadas genéricas no jogo atual**. Consulte `DATA-LICENSE.md`.
 
-As colisões de prédios carregados usam seus polígonos, mas o carregamento é assíncrono. A posição multiplayer é validada por tipo, limites e velocidade; o servidor ainda não valida todas as colisões contra a geometria. É um protótipo social sem competição, não um servidor com proteção completa contra trapaças.
+Modelos humanos, materiais PBR e objetos: consulte `ASSETS.md`. As ferramentas em `tools/` documentam as transformações. Modelos de museus, marcas e clubes não são declarados oficiais; os dioramas regionais inventados da versão 0.1 não fazem parte da experiência principal atual.
 
-No celular, a qualidade automática reduz resolução e desativa sombras. A compatibilidade foi projetada para WebGL 2; validação em aparelho físico ainda é necessária. Desempenho varia conforme GPU e navegador.
+## Próximas entregas necessárias
 
-## Próximos passos
-
-1. Revisar a pé o percurso Paulista → Centro → Ibirapuera e corrigir acessos, orientação, níveis e dimensões dos 12 marcos com fontes abertas/levantamentos licenciados.
-2. Substituir as fachadas genéricas por conjuntos de fachadas e materiais próprios baseados em referências autorizadas; detalhar calçadas, travessias, mobiliário, vegetação e iluminação.
-3. Melhorar anatomia, roupa, rig e animações do personagem; colisão e câmera por volume.
-4. Importar relevo, pontes e túneis; acrescentar streaming viário, LODs, oclusão e orçamento por aparelho.
-5. Expandir São Caetano e São Bernardo com dados reais e modelos revisados; depois Anchieta/Imigrantes, Serra do Mar e Baixada. Converter as prévias da orla e Vila Belmiro em áreas completas somente após pesquisa de geometria e acesso.
-6. Evoluir salas com autoridade de movimento, reconexão, regiões, interpolação e teste de carga; persistência apenas quando houver mecânicas que precisem dela.
-
-Não declarar cidade completa ou fidelidade fotográfica com base neste protótipo. Para apresentação, utilizar imagens reais do jogo e identificar as prévias como conceitos.
+1. Autorizar e configurar a fonte 3D real, validar custos/cotas e inspecionar cobertura do Centro Histórico.
+2. Corrigir georreferenciamento, altura do chão, colisão, nível da rua, oclusão e câmera contra a geometria real; testar em GPUs e aparelhos físicos.
+3. Levantar interiores acessíveis, mobiliário e fachadas ausentes com material autorizado, sem completar lacunas com prédios fictícios apresentados como reais.
+4. Evoluir rig, cabelo, pele, roupas e animações, além de comportamento de pedestres e veículos.
+5. Transferir e revisar as histórias do laboratório para os locais reais, com circulação e interações validadas.
+6. Expandir ABC, Serra do Mar e Baixada por áreas, mantendo o mesmo critério de fontes reais e inspeção. Vila Belmiro exige geometria e acesso próprios, não um estádio genérico com o nome trocado.
