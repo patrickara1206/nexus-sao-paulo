@@ -1,6 +1,7 @@
 import streetData from './streets.json' with {type:'json'};
 import {previewRegions} from './regions.js';
 import {toLocal} from './geodesy.js';
+import parkData from './trianon.json' with {type:'json'};
 export const SCALE=1;
 export function project(lat,lon){const {x,z}=toLocal(lat,lon);return {x,z};}
 export const places=[
@@ -30,3 +31,7 @@ export function nearestStreet(x,z){let best={name:'Área sem via identificada',d
 export function inPark(x,z){return ((x+170)/650)**2+((z-2900)/900)**2<1;}
 export function canMove(x,z,colliders=[],radius=1){const inside=x>bounds.minX+10&&x<bounds.maxX-10&&z>bounds.minZ+10&&z<bounds.maxZ-10||previewRegions.some(r=>r.id!=='core'&&Math.abs(x-r.x)<220&&Math.abs(z-r.z)<220&&(r.kind!=='coast'||z<r.z+170));if(!inside)return false;return !colliders.some(c=>{if(Math.abs(x-c.x)>=c.w/2+radius||Math.abs(z-c.z)>=c.d/2+radius)return false;if(!c.points)return true;let inside=false;for(let i=0,j=c.points.length-1;i<c.points.length;j=i++){const a=c.points[i],b=c.points[j];if(segmentDistance(x,z,a,b)<radius)return true;if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;});}
 export function nearestPlace(x,z){return places.reduce((a,b)=>Math.hypot(a.x-x,a.z-z)<Math.hypot(b.x-x,b.z-z)?a:b);}
+
+export const trianonPolygons=parkData.features.map(f=>f.geometry.coordinates[0].map(([lon,lat])=>{const p=project(lat,lon);return [p.x,p.z];}));
+export const trianonEntrance={id:'trianon',name:'Parque Trianon · entrada mapeada',...project(parkData.entrance.lat,parkData.entrance.lon),source:'https://www.openstreetmap.org/node/'+parkData.entrance.node};
+export function inTrianon(x,z){return trianonPolygons.some(points=>{let inside=false;for(let i=0,j=points.length-1;i<points.length;j=i++){const a=points[i],b=points[j];if(segmentDistance(x,z,a,b)<.3)return true;if((a[1]>z)!==(b[1]>z)&&x<(b[0]-a[0])*(z-a[1])/(b[1]-a[1])+a[0])inside=!inside;}return inside;});}

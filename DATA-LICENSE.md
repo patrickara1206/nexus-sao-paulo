@@ -1,6 +1,6 @@
 # Dados OpenStreetMap
 
-`src/streets.json` e todos os arquivos em `public/data/buildings/` contêm dados derivados do OpenStreetMap, © OpenStreetMap contributors, disponibilizados sob Open Database License (ODbL) 1.0.
+`src/streets.json`, `src/trianon.json` e todos os arquivos em `public/data/buildings/` contêm dados derivados do OpenStreetMap, © OpenStreetMap contributors, disponibilizados sob Open Database License (ODbL) 1.0.
 
 https://www.openstreetmap.org/copyright
 
