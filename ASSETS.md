@@ -42,3 +42,7 @@ Não há tiles Google incorporados nos recursos do repositório. O adaptador só
 ## Draco e bibliotecas
 
 Os decodificadores Draco são distribuídos a partir de `three/examples/jsm/libs/draco/gltf`, sob os termos do projeto Draco: https://github.com/google/draco/blob/main/LICENSE. Three.js e as demais bibliotecas mantêm suas licenças originais. 3D Tiles Renderer: https://github.com/NASA-AMMOS/3DTilesRendererJS.
+
+## Reconstrução do MASP e Trianon
+
+Contorno e dimensões: https://www.openstreetmap.org/way/1370081491. Parque: https://www.openstreetmap.org/relation/7398292. Referência fotográfica CC0 de Wilfredor: https://commons.wikimedia.org/wiki/File:MASP_Brazil.jpg (consulta visual; imagem não incorporada). Descrição arquitetônica da Câmara Municipal: https://www.saopaulo.sp.leg.br/iah/fulltext/projeto/PL0098-1992.pdf. Materiais e detalhes são reconstruções sujeitas a revisão, não uma captura fotogramétrica.

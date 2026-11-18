@@ -1,8 +1,20 @@
 # NEXUS — São Paulo / Solo
 
-**Versão 0.2: base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
+**Versão 0.3: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
 
 O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
+
+## Trecho reconstruído nesta atualização
+
+O jogo inicia no entorno do MASP, em uma reconstrução parcial, e permite caminhar até o perímetro/caminhos do Trianon. O laboratório de lojas e interiores permanece separado, no menu.
+
+- MASP: contorno do OSM way 1370081491; envoltória de aproximadamente 77,8 × 30 m, altura mapeada de 24,75 m e vão inferior de 8,4 m. Pilares, vigas e caixilharia foram modelados por referências. Não é um escaneamento nem um levantamento arquitetônico completo.
+- Trianon: polígonos da relação OSM 7398292, caminhos públicos presentes na resposta do mapa e entrada no nó 2081876330. Árvores com posições mapeadas são complementadas por vegetação indicativa; espécies e densidade não são levantamento fiel.
+- Vias superficiais próximas são renderizadas pelo traçado do OSM. Túneis são excluídos da superfície e da identificação de rua atual. Larguras, materiais e cotas ainda são aproximações.
+- Não há fachadas genéricas de prédios vizinhos. Essas lacunas permanecem visíveis. O edifício Pietro Maria Bardi e o desnível para a Nove de Julho ainda não foram reconstruídos.
+- Reconstrução limita-se ao trecho: os destinos do Centro Histórico continuam no atlas para orientar a expansão, sem serem declarados prontos.
+
+Fontes e limitações estão em `src/masp-source.json`, `src/trianon.json` e `src/paulista-landscape.json`.
 
 ## Implementado e utilizável
 
@@ -23,7 +35,7 @@ O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e perso
 
 A integração de transmissão de Google Maps Photorealistic 3D Tiles está implementada em `src/photoreal-city.js`, com georreferenciamento WGS84, decodificador Draco e atribuições de fonte. **Não foi ativada nem validada com a cidade real por falta de configuração autorizada do provedor.**
 
-Sem uma chave configurada, o jogo não faz chamadas ao serviço de mapas 3D e entra no laboratório de mecânicas, identificado claramente. Não substitui fachadas faltantes por edifícios inventados.
+Sem uma chave configurada, o jogo não faz chamadas ao serviço de mapas 3D e abre o trecho parcial reconstruído com fontes abertas; o laboratório de mecânicas fica no menu. Não substitui fachadas faltantes por edifícios inventados.
 
 O Centro Histórico está no escopo completo. O atlas já referencia Sé, Pátio do Colégio, São Bento, Anhangabaú, Theatro Municipal, República, Copan, Itália, Martinelli, Biblioteca Mário de Andrade, Luz e Pinacoteca. Essa lista **não prova que cada prédio, fachada, parque, rua ou interior foi reconstruído**. A cobertura e a resolução precisam ser inspecionadas com a fonte conectada.
 
