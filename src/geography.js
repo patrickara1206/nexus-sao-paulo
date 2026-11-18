@@ -1,7 +1,8 @@
 import streetData from './streets.json' with {type:'json'};
 import {previewRegions} from './regions.js';
+import {toLocal} from './geodesy.js';
 export const SCALE=1;
-export function project(lat,lon){return {x:(lon+46.6559)*101970,z:-(lat+23.5614)*111320};}
+export function project(lat,lon){const {x,z}=toLocal(lat,lon);return {x,z};}
 export const places=[
  ['masp','MASP · Avenida Paulista',-23.5614,-46.6559,'Paulista · Vão livre e museu','masp'],
  ['casa','Casa das Rosas',-23.5711,-46.6447,'Paulista · Patrimônio e jardim','house'],
