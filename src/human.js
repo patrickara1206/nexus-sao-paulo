@@ -7,6 +7,13 @@ export async function createHuman(appearance={}){const base=await loadHuman(),ro
 transformed.y-=baseY;transformed*=bodyNorm;vBody=transformed;
 float belly=exp(-pow((transformed.y-1.03)*4.,2.));
 transformed.x*=1.+(bulk-.5)*.4*belly;transformed.z*=1.+(bulk-.5)*.6*belly;
+// Fit a loose cloth envelope instead of painting the chest surface.
+if(transformed.y>.94&&transformed.y<1.44&&abs(transformed.x)<.27){
+ float rx=.25+bulk*.06;float rz=.145+bulk*.055;
+ if(transformed.z<-.025){transformed.z=-rz*sqrt(max(.03,1.-pow(transformed.x/rx,2.)))-.012;transformed.z+=.0025*sin(transformed.y*65.+transformed.x*24.);}
+ transformed.x*=1.045;
+}
+
 if(transformed.y<.88){float swing=sin(phase+step(0.,transformed.x)*3.14159)*.42*move;float ly=transformed.y-.88;float lz=transformed.z;transformed.y=.88+ly*cos(swing)-lz*sin(swing);transformed.z=ly*sin(swing)+lz*cos(swing);}
 if(abs(transformed.x)>.21&&transformed.y>.65&&transformed.y<1.48){float side=sign(transformed.x);float amount=smoothstep(.21,.32,abs(transformed.x));float angle=-side*.5*amount;vec2 arm=transformed.xy-vec2(side*.21,1.4);transformed.xy=vec2(arm.x*cos(angle)-arm.y*sin(angle),arm.x*sin(angle)+arm.y*cos(angle))+vec2(side*.21,1.4);float amount2=smoothstep(.24,.44,abs(transformed.x));transformed.z+=sin(phase+step(0.,transformed.x)*3.14159)*.17*move*amount2;}
 transformed.y+=abs(sin(phase))*move*.025;`);
