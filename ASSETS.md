@@ -57,4 +57,4 @@ Estação: https://www.metro.sp.gov.br/pt_BR/sua-viagem/linhas-estacoes/linha-2-
 
 Paulista Corporate: https://www.openstreetmap.org/way/363639776. Fotografia de referência de Sergio Brisola: https://www.descubrasampa.com.br/2022/08/edificio-paulista-corporate.html; características técnicas: https://busca.cbre.com.br/imoveis/paulista_corporate. A foto não faz parte dos arquivos do jogo. Fachada reconstruída de forma específica, sujeita a revisão.
 
-Revisão 0.5: bancos CC0 reutilizados no parque; postes contemporâneos, guias, faixas e calçados são geometrias originais de ambientação. Posicionamento indicativo, não levantamento fiel do mobiliário. Reflexos usam o céu analítico do Three.js; não foram adicionadas fotos geradas por IA nem fachadas fictícias para preencher prédios ausentes.
+Revisão 0.5: bancos CC0 reutilizados no parque; postes contemporâneos, guias e faixas são geometrias originais de ambientação. Posicionamento indicativo, não levantamento fiel do mobiliário. Reflexos usam o céu analítico do Three.js; não foram adicionadas fotos geradas por IA nem fachadas fictícias para preencher prédios ausentes.

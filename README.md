@@ -9,7 +9,7 @@ O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e perso
 - Reflexos do céu calculados no carregamento para dar leitura aos vidros, pintura e metais; sol, exposição e sombras revistos.
 - Luz da superfície desligada nos espaços subterrâneos. Estação com luz própria, piso/concreto fotográficos, juntas de painéis e piso tátil instanciado.
 - Interface compacta, novas telas e menos painéis sobre o cenário no modo livre. Câmera permite olhar mais para cima; posição vertical protegida contra atravessar o chão.
-- Postura dos braços, gola e cobertura das mangas revistas. Calçados com geometria separada, acompanhando o movimento procedural das pernas. Ainda não é um personagem com rig/animação de produção.
+- Postura dos braços, gola e cobertura das mangas revistas. Cobertura dos pés e postura revistas, acompanhando a animação procedural existente. Ainda não é um personagem com rig/animação de produção.
 - Guias, faixas, postes e bancos adicionados ao trecho. Posições e detalhes são indicativos, sem levantamento de mobiliário ou sinalização. As fachadas ausentes e o relevo completo continuam pendentes.
 
 ## Mobilidade Web
