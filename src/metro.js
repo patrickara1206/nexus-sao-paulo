@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {pbrMaterial} from './lab.js';
 import {batchStatic} from './scene-batching.js';
 import source from './transport-source.json' with {type:'json'};
 import {project} from './geography.js';
@@ -10,15 +11,18 @@ export function makeSign(text,width=5,height=.65,color='#12623e'){
 }
 export function createMetro(scene){
  const root=new T.Group();root.name='Trianon Masp station study';root.visible=false;scene.add(root);root.userData.colliders=[];
- const concrete=new T.MeshStandardMaterial({color:'#92958f',roughness:.94}),floor=new T.MeshStandardMaterial({color:'#a3a39b',roughness:.84}),edge=new T.MeshStandardMaterial({color:'#c5ab48',roughness:.8}),steel=new T.MeshStandardMaterial({color:'#8c9597',metalness:.8,roughness:.33}),dark=new T.MeshStandardMaterial({color:'#151f24',roughness:.6}),glass=new T.MeshStandardMaterial({color:'#172d37',metalness:.45,roughness:.19}),light=new T.MeshStandardMaterial({color:'#f0f1d9',emissive:'#e8f4d9',emissiveIntensity:1.4});
+ const concrete=pbrMaterial('concrete_pavement',1),floor=pbrMaterial('concrete_pavement',1),edge=new T.MeshStandardMaterial({color:'#c5ab48',roughness:.8}),steel=new T.MeshStandardMaterial({color:'#8c9597',metalness:.8,roughness:.33}),dark=new T.MeshStandardMaterial({color:'#151f24',roughness:.6}),glass=new T.MeshStandardMaterial({color:'#172d37',metalness:.45,roughness:.19}),light=new T.MeshStandardMaterial({color:'#f0f1d9',emissive:'#e8f4d9',emissiveIntensity:1.4});
+ concrete.color.set('#818783');floor.color.set('#a4a99e');
  const geo=new T.BoxGeometry(1,1,1);function box(parent,x,y,z,w,h,d,mat){const m=new T.Mesh(geo,mat);m.position.set(x,y+h/2,z);m.scale.set(w,h,d);m.receiveShadow=true;parent.add(m);return m;}
- box(root,0,-.45,0,10,.45,140,floor);for(const x of [-4.75,4.75])box(root,x,.005,0,.35,.025,138,edge);
+ const platform=box(root,0,-.45,0,10,.45,140,floor);platform.geometry=platform.geometry.clone();const uv=platform.geometry.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*5,uv.getY(i)*70);for(const x of [-4.75,4.75])box(root,x,.005,0,.35,.025,138,edge);
  for(const side of [-1,1]){const x=side*7.15;box(root,x,-1.25,0,4,.2,900,dark);for(const rail of [-.8,.8])box(root,x+rail,-.97,0,.1,.16,900,steel);for(let z=-420;z<420;z+=.85)box(root,x,-1.07,z,2.2,.16,.22,concrete);box(root,side*9.8,-1.3,0,.45,9,920,concrete);box(root,side*9.6,4.6,0,.4,1.8,140,dark);}
  box(root,0,7,0,20,.5,150,concrete);for(let z=-60;z<=60;z+=12){for(const x of [-2.3,2.3]){const col=new T.Mesh(new T.CylinderGeometry(.32,.37,6.9,16),concrete);col.position.set(x,3.45,z);root.add(col);}box(root,0,6.65,z,19,.3,.45,concrete);for(const x of [-5,5])box(root,x,5.9,z,.12,.08,7,light);}
  // Two distribution mezzanines and stairs, matching the documented arrangement; dimensions approximate.
  for(const side of [-1,1]){box(root,0,5.7,side*67,10,.3,13,concrete);for(let i=0;i<30;i++)box(root,0,i*.2,side*(49+i*.55),3,.2,.55,floor);for(let i=0;i<3;i++)box(root,-2+i*2,6,side*70,1.1,.9,.4,steel);const exit=makeSign('SAÍDA ↑ AVENIDA PAULISTA',5,.6);exit.position.set(0,7.05,side*70);root.add(exit);}
  for(const z of [-45,-15,15,45]){const sign=makeSign('TRIANON–MASP  •  2 VERDE',5,.55);sign.position.set(0,4.7,z);root.add(sign);for(const x of [-3,3]){box(root,x,.45,z,1.6,.08,.5,steel);box(root,x,.5,z+.22,1.6,.5,.05,steel);}}
- const ambient=new T.HemisphereLight('#f3f2dc','#4d5152',2.2);root.add(ambient);for(const z of [-50,0,50]){const p=new T.PointLight('#f0f4de',160,42,2);p.position.set(0,5,z);root.add(p);}
+ const tactile=new T.InstancedMesh(new T.CylinderGeometry(.018,.018,.009,6),edge,2100),bump=new T.Object3D();let bumpIndex=0;for(const side of [-1,1])for(let i=0;i<350;i++)for(let row=0;row<3;row++){bump.position.set(side*(4.62+row*.07),.038,-69.8+i*.4);bump.updateMatrix();tactile.setMatrixAt(bumpIndex++,bump.matrix);}root.add(tactile);
+ for(const side of [-1,1])for(let z=-66;z<68;z+=6){box(root,side*9.55,-.9,z,.08,5.2,.035,dark);box(root,side*9.5,3.5,z,.09,.035,6,dark);}
+ const ambient=new T.HemisphereLight('#f3f2dc','#4d5152',1.15);root.add(ambient);for(const z of [-50,0,50]){const p=new T.PointLight('#f0f4de',160,42,2);p.position.set(0,5,z);root.add(p);}
  const trains=[],stripe=new T.MeshStandardMaterial({color:'#185b52',roughness:.45,metalness:.35}),dummy=new T.Object3D();
  for(const side of [-1,1]){const train=new T.Group(),doors=[],leaves=new T.InstancedMesh(geo,steel,72),windows=new T.InstancedMesh(geo,glass,72);train.add(leaves,windows);leaves.frustumCulled=windows.frustumCulled=false;root.add(train);train.position.x=side*7.15;
   for(let car=0;car<6;car++){const cz=(car-2.5)*21.7;box(train,0,-.56,cz,3.15,3.15,20.9,steel);box(train,0,.15,cz,3.19,.18,20.9,stripe);box(train,0,2.62,cz,2.9,.18,20.4,dark);for(const wheelZ of [-7,7])for(const x of [-.85,.85]){const wheel=new T.Mesh(new T.CylinderGeometry(.37,.37,.16,14),steel);wheel.rotation.z=Math.PI/2;wheel.position.set(x,-.74,cz+wheelZ);train.add(wheel);}

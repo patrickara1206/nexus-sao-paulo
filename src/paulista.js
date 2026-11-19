@@ -1,4 +1,5 @@
 import * as T from 'three';
+import {addStreetDetails} from './street-details.js';
 import {batchStatic} from './scene-batching.js';
 import {createNeighbors} from './neighbors.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -42,5 +43,5 @@ export function createPaulista(scene){
  const ready=assets.loadAsync('/assets/props/tree_road.glb').then(g=>{const box=new T.Box3().setFromObject(g.scene),height=box.max.y-box.min.y;const geometries=[];g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh)geometries.push({geometry:o.geometry.clone().applyMatrix4(o.matrixWorld),material:o.material});});for(const part of geometries){const mesh=new T.InstancedMesh(part.geometry,part.material,treeLocations.length),dummy=new T.Object3D();treeLocations.forEach((p,i)=>{const scale=(p.mapped?9:6)+(i%7);dummy.position.set(p.x,base-box.min.y*scale/height,p.z);dummy.rotation.y=i*2.4;dummy.scale.setScalar(scale/height);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});mesh.castShadow=true;mesh.receiveShadow=true;props.add(mesh);}loaded=treeLocations.length;}).catch(e=>console.warn('Vegetation could not be loaded',e));
  const perimeter=[];for(const polygon of trianonPolygons){const points=polygon.slice();if(points.length&&Math.hypot(points[0][0]-points.at(-1)[0],points[0][1]-points.at(-1)[1])>.1)points.push(points[0]);perimeter.push(points);}
  const fenceMaterial=new T.MeshStandardMaterial({color:'#3f4842',metalness:.65,roughness:.6});for(const polygon of perimeter)for(let i=1;i<polygon.length;i++){const a=polygon[i-1],b=polygon[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);for(let d=0;d<len;d+=2.2){const t=d/len,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;if(Math.hypot(x-trianonEntrance.x,z-trianonEntrance.z)<5)continue;cube(root,x,base,z,.05,1.8,.05,fenceMaterial);}}
- batchStatic(root);return {root,colliders,bounds,ready,get treeCount(){return loaded;},get source(){return masp;},groundHeight(){return base;}};
+ const detailsReady=addStreetDetails(root,colliders);batchStatic(root);return {root,colliders,bounds,ready:Promise.allSettled([ready,detailsReady]),get treeCount(){return loaded;},get source(){return masp;},groundHeight(){return base;}};
 }

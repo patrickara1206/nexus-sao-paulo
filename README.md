@@ -1,10 +1,19 @@
 # NEXUS — São Paulo / Solo
 
-**Versão 0.4: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
+**Versão 0.5: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
 
 O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
 
-## Mobilidade Web nesta atualização
+## Revisão visual 0.5
+
+- Reflexos do céu calculados no carregamento para dar leitura aos vidros, pintura e metais; sol, exposição e sombras revistos.
+- Luz da superfície desligada nos espaços subterrâneos. Estação com luz própria, piso/concreto fotográficos, juntas de painéis e piso tátil instanciado.
+- Interface compacta, novas telas e menos painéis sobre o cenário no modo livre. Câmera permite olhar mais para cima; posição vertical protegida contra atravessar o chão.
+- Postura dos braços, gola e cobertura das mangas revistas. Calçados com geometria separada, acompanhando o movimento procedural das pernas. Ainda não é um personagem com rig/animação de produção.
+- Guias, faixas, postes e bancos adicionados ao trecho. Posições e detalhes são indicativos, sem levantamento de mobiliário ou sinalização. As fachadas ausentes e o relevo completo continuam pendentes.
+
+## Mobilidade Web
+
 
 - Carro original sem marca, com modelo CC0 detalhado, aceleração, direção, freio e ré. Saída só com o veículo parado; respeita vias, limites e obstáculos do trecho.
 - Doze veículos nas duas pistas mapeadas da Paulista, com frenagem por proximidade e ciclo de semáforo. Rotas de tráfego seguem o OSM; posicionamento dos semáforos e comportamento são aproximações de gameplay.
