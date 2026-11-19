@@ -46,3 +46,13 @@ Os decodificadores Draco são distribuídos a partir de `three/examples/jsm/libs
 ## Reconstrução do MASP e Trianon
 
 Contorno e dimensões: https://www.openstreetmap.org/way/1370081491. Parque: https://www.openstreetmap.org/relation/7398292. Referência fotográfica CC0 de Wilfredor: https://commons.wikimedia.org/wiki/File:MASP_Brazil.jpg (consulta visual; imagem não incorporada). Descrição arquitetônica da Câmara Municipal: https://www.saopaulo.sp.leg.br/iah/fulltext/projeto/PL0098-1992.pdf. Materiais e detalhes são reconstruções sujeitas a revisão, não uma captura fotogramétrica.
+
+## Carro e otimização
+
+Sedã original Innerscene (sem marca), CC0: https://www.innerscene.com/tools/library/3d-parts/graphite-four-door-sedan-eed96d12. Download original: https://www.innerscene.com/api/library/graphite-four-door-sedan-eed96d12/download. Arquivo publicado `public/assets/vehicles/sedan-road.glb`, malhas simplificadas por glTF Transform/meshoptimizer. A aparência não representa um modelo comercial específico. `tree_road.glb` deriva da árvore CC0 Poly Haven já creditada, com geometria simplificada.
+
+## Estação, túneis e Paulista Corporate
+
+Estação: https://www.metro.sp.gov.br/pt_BR/sua-viagem/linhas-estacoes/linha-2-verde/estacao-trianon-masp/ e planta pública https://www.metro.sp.gov.br/wp-content/uploads/2024/06/Estacao-Trianon-Masp.pdf. Trens e seção do túnel são geometrias originais aproximadas, não scans da frota nem projetos executivos. Traçados: OSM ways 38630340, 72767347, 167131038 e 737449310.
+
+Paulista Corporate: https://www.openstreetmap.org/way/363639776. Fotografia de referência de Sergio Brisola: https://www.descubrasampa.com.br/2022/08/edificio-paulista-corporate.html; características técnicas: https://busca.cbre.com.br/imoveis/paulista_corporate. A foto não faz parte dos arquivos do jogo. Fachada reconstruída de forma específica, sujeita a revisão.

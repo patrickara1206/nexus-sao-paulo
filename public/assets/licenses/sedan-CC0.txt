@@ -1,0 +1,5 @@
+Innerscene - Graphite four-door sedan
+Original unbranded model, CC0-1.0.
+https://www.innerscene.com/tools/library/3d-parts/graphite-four-door-sedan-eed96d12
+https://creativecommons.org/publicdomain/zero/1.0/
+Modified: geometry simplified and runtime materials optimized.

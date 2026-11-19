@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+import {toLocal} from '../src/geodesy.js';
+const raw=JSON.parse(fs.readFileSync(process.argv[2]||'../../work/buildings-osm-raw.json','utf8'));
+const e=raw.elements.find(e=>e.id===363639776);if(!e)throw new Error('Paulista Corporate footprint missing');
+const p=e.geometry.slice(0,-1).map(q=>{const r=toLocal(q.lat,q.lon);return [r.x,r.z];});let edge={length:0};
+for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length],length=Math.hypot(b[0]-a[0],b[1]-a[1]);if(length>edge.length)edge={length,dx:(b[0]-a[0])/length,dz:(b[1]-a[1])/length};}
+const axis=[edge.dx,edge.dz],normal=[-edge.dz,edge.dx],values=p.map(q=>[q[0]*axis[0]+q[1]*axis[1],q[0]*normal[0]+q[1]*normal[1]]),min=[0,1].map(i=>Math.min(...values.map(v=>v[i]))),max=[0,1].map(i=>Math.max(...values.map(v=>v[i]))),mid=min.map((v,i)=>(v+max[i])/2);
+fs.writeFileSync('src/neighbors-source.json',JSON.stringify({buildings:[{name:e.tags.name,id:e.id,footprint:p,height:Number(e.tags.height),floors:17,axis,normal,length:max[0]-min[0],depth:max[1]-min[1],center:{x:axis[0]*mid[0]+normal[0]*mid[1],z:axis[1]*mid[0]+normal[1]*mid[1]},source:'https://www.openstreetmap.org/way/'+e.id,reference:'https://www.descubrasampa.com.br/2022/08/edificio-paulista-corporate.html',referenceAuthor:'Sergio Brisola',technicalReference:'https://busca.cbre.com.br/imoveis/paulista_corporate',limitations:['Reconstructed facade from a photograph, not a survey.','Bay count, cladding joints, ground floor and roof require on-site validation.','Reference photograph is not redistributed or used as a texture.']}],license:'OSM-derived footprint ODbL-1.0; original reconstruction geometry',osmBase:raw.osm3s.timestamp_osm_base}));

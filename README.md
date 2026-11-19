@@ -1,8 +1,21 @@
 # NEXUS — São Paulo / Solo
 
-**Versão 0.3: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
+**Versão 0.4: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
 
 O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
+
+## Mobilidade Web nesta atualização
+
+- Carro original sem marca, com modelo CC0 detalhado, aceleração, direção, freio e ré. Saída só com o veículo parado; respeita vias, limites e obstáculos do trecho.
+- Doze veículos nas duas pistas mapeadas da Paulista, com frenagem por proximidade e ciclo de semáforo. Rotas de tráfego seguem o OSM; posicionamento dos semáforos e comportamento são aproximações de gameplay.
+- Plataforma central e dois mezaninos do Trianon–Masp, com limites que impedem caminhar nos trilhos. Dois trens de seis carros chegam, abrem portas enquanto parados e partem. Não há embarque nem viagem entre estações.
+- As duas pistas do Túnel Nove de Julho seguem as linhas do OSM. São exploráveis a pé; também é possível entrar com o carro pelos portais. Seção, cotas, luminárias e acessos ainda são aproximações. Entrada/saída por transição, sem rampas contínuas.
+- Paulista Corporate: contorno OSM, altura mapeada de 66 m, características de fachada reconstruídas por fotografia de Sergio Brisola e referência técnica da CBRE. Não é escaneamento e precisa de revisão de detalhes. Fotografia não redistribuída nem aplicada como textura.
+- Menu **Carro, metrô e túneis** permite acesso rápido às prévias. Na rua, aproxime-se dos acessos e use E. No carro: W acelerar, S frear/ré, A/D virar, Espaço frear e E sair. No celular: joystick e botão de freio.
+- A história **Circuito da Paulista** substitui a entrega que exigia uma Sé ainda não construída. Apenas o progresso incompleto dessa história antiga é reiniciado; saldo, aparência e demais histórias são preservados.
+- Geometrias estáticas agrupadas por material, portas dos trens instanciadas, árvores simplificadas e somente três luzes locais nos túneis. Qualidade inicial equilibrada no PC e leve no celular. Desempenho varia por equipamento.
+
+Fontes: `src/transport-source.json`, `src/neighbors-source.json`, ASSETS.md. A versão nativa foi pausada a pedido do usuário; o produto principal continua Web.
 
 ## Trecho reconstruído nesta atualização
 
@@ -11,7 +24,7 @@ O jogo inicia no entorno do MASP, em uma reconstrução parcial, e permite camin
 - MASP: contorno do OSM way 1370081491; envoltória de aproximadamente 77,8 × 30 m, altura mapeada de 24,75 m e vão inferior de 8,4 m. Pilares, vigas e caixilharia foram modelados por referências. Não é um escaneamento nem um levantamento arquitetônico completo.
 - Trianon: polígonos da relação OSM 7398292, caminhos públicos presentes na resposta do mapa e entrada no nó 2081876330. Árvores com posições mapeadas são complementadas por vegetação indicativa; espécies e densidade não são levantamento fiel.
 - Vias superficiais próximas são renderizadas pelo traçado do OSM. Túneis são excluídos da superfície e da identificação de rua atual. Larguras, materiais e cotas ainda são aproximações.
-- Não há fachadas genéricas de prédios vizinhos. Essas lacunas permanecem visíveis. O edifício Pietro Maria Bardi e o desnível para a Nove de Julho ainda não foram reconstruídos.
+- O Paulista Corporate é o primeiro prédio vizinho reconstruído por referência. As outras lacunas permanecem visíveis. O edifício Pietro Maria Bardi e o desnível para a Nove de Julho ainda não foram reconstruídos.
 - Reconstrução limita-se ao trecho: os destinos do Centro Histórico continuam no atlas para orientar a expansão, sem serem declarados prontos.
 
 Fontes e limitações estão em `src/masp-source.json`, `src/trianon.json` e `src/paulista-landscape.json`.
@@ -27,7 +40,7 @@ Fontes e limitações estão em `src/masp-source.json`, `src/trianon.json` e `sr
 - Modo livre sem progresso obrigatório de história.
 - Loja de roupas com compra/equipamento, guarda-roupa persistente e validação de saldo. Os conjuntos alteram as cores e os materiais; ainda não são peças de alfaiataria digital distintas.
 - Lanchonete com compra de refeição e recuperação de saúde; apartamento com descanso e acesso à personalização. Os três interiores são **ambientes de teste de mecânicas**, não interiores levantados de edifícios reais.
-- Mapa vetorial com posição do personagem e nome da rua atual, calculado sobre 6.133 trechos reais do OpenStreetMap. Na ausência da cidade real, a interface indica que se trata da referência geográfica do laboratório.
+- Mapa vetorial com posição do personagem e nome da rua atual, calculado sobre 6.133 trechos reais do OpenStreetMap. No trecho externo, a posição corresponde ao mapa; o laboratório separado mantém sua indicação de cenário de testes.
 - Perfil, saldo, peças compradas e missões salvos no navegador. Não há servidor de contas nem sincronização entre aparelhos.
 - Materiais fotográficos PBR e modelos CC0 de árvore, poste, banco e café em um laboratório separado. Esses objetos não são apresentados como levantamento de uma praça real de São Paulo.
 
