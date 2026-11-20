@@ -48,6 +48,8 @@ body.free-mode #quest{bottom:224px;background:transparent;backdrop-filter:none;b
  color:#f1ded0;
 }
 #mapDestination { color:#e4c28a; margin:0 0 12px; line-height:1.5; }
+#mapDialog { scrollbar-color:#587376 #14252d; }
+#mapDialog .atlas canvas { max-height:calc(90dvh - 205px); object-fit:contain; }
 .map-places h3:not(:first-child), #mapReference { margin-top:16px; }
 .map-reference-list { display:grid; gap:7px; font-size:11px; color:#bdcacb; margin-bottom:16px; }
 @media (max-width:700px) {
