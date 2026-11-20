@@ -20,3 +20,41 @@ body.free-mode #quest{bottom:224px;background:transparent;backdrop-filter:none;b
 #toast{top:164px;border:1px solid #ffffff25;background:#172c31ed;color:#f1d4a3;border-radius:10px;padding:12px 20px;box-shadow:0 8px 30px #08151a30;font-size:11px}
 #intro{background:radial-gradient(ellipse at 57% 40%,#33444ce6,#111d23f7 70%);padding:32px 4vw}.intro-layout{gap:3vw;margin-top:5vh}.intro-copy h1{font:600 clamp(52px,5.2vw,82px)/.98 'Barlow Condensed',sans-serif;letter-spacing:-.5px}.intro-copy>p{font-size:13px;line-height:1.9;color:#bdcacb}.city-note{padding-top:17px;margin:22px 0}.city-note p{font-size:10px;line-height:1.7}.intro-actions button{border-radius:9px}.intro-actions .primary{background:linear-gradient(120deg,#edd1a0,#cfa566);box-shadow:0 8px 30px #0003}.studio{border-radius:16px;border:1px solid #ffffff17;background:radial-gradient(ellipse at 50% 30%,#7e939029,#19272c90);box-shadow:0 25px 70px #050e1433}.character-form{background:#122229aa!important;border-color:#ffffff1c!important;border-radius:14px!important}.character-form input,.character-form select{border-radius:6px}dialog{border:1px solid #ffffff20;border-radius:14px;background:linear-gradient(145deg,#20343d,#14252d);box-shadow:0 35px 120px #0008}dialog::backdrop{background:#07131791;backdrop-filter:blur(9px)}.mission-card,.clothing-card{border-radius:9px;background:#ffffff03}.dialog-head button{border-radius:50%}
 @media(max-width:700px){header{padding:20px}#address{left:20px;top:91px}#street{font-size:18px}#cityStatus{top:170px;right:20px;max-width:175px;font-size:8px;background:#14262c75}#quest{left:20px;top:auto;bottom:330px;max-width:215px}body.free-mode #quest{bottom:300px;left:20px}.bottom{bottom:165px;left:20px;right:20px}#interactionPrompt{bottom:298px;max-width:88vw;white-space:normal;text-align:center;font-size:10px}body.free-mode #interactionPrompt{bottom:350px}#toast{top:218px;max-width:88vw;width:max-content;font-size:10px}.intro-copy h1{font-size:64px}#intro{padding:22px}.studio{width:100%}#joystick{background:#1833378c;border-color:#e4c28a55}#touch button{background:#173036c9;border-color:#e4c28a55}}
+
+
+#navIndicator {
+ position:absolute;
+ top:154px;
+ left:28px;
+ display:flex;
+ align-items:center;
+ gap:10px;
+ max-width:min(290px, calc(100vw - 56px));
+ padding:8px 12px;
+ border:1px solid #e4c28a45;
+ border-radius:9px;
+ background:#13272ce8;
+}
+#navArrow { color:var(--accent); font-size:22px; line-height:1; flex-shrink:0; }
+#navName, #navDistance { display:block; }
+#navName { font-size:11px; line-height:1.45; }
+#navDistance { color:#dec89f; font-size:10px; margin-top:2px; }
+.map-tools { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+.map-tools button { font-size:12px; min-height:38px; }
+.map-tools button:disabled { cursor:default; }
+#mapDialog button[aria-pressed="true"] {
+ background:#314b4c;
+ border-color:#9bcab280;
+ color:#f1ded0;
+}
+#mapDestination { color:#e4c28a; margin:0 0 12px; line-height:1.5; }
+.map-places h3:not(:first-child), #mapReference { margin-top:16px; }
+.map-reference-list { display:grid; gap:7px; font-size:11px; color:#bdcacb; margin-bottom:16px; }
+@media (max-width:700px) {
+ #navIndicator { top:151px; left:20px; max-width:calc(100vw - 40px); }
+ body:has(#navIndicator:not([hidden])) #cityStatus { top:207px; }
+ body:has(#navIndicator:not([hidden])) #toast { top:255px; }
+ #mapDialog .atlas canvas { max-height:31dvh; }
+ #mapDialog .atlas>div { max-height:none; overflow:visible; }
+ #mapDialog .atlas { gap:12px; }
+}

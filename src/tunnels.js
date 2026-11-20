@@ -1,22 +1,162 @@
 import * as T from 'three';
+import {pbrMaterial} from './lab.js';
 import {batchStatic} from './scene-batching.js';
 import source from './transport-source.json' with {type:'json'};
-import {project,segmentDistance} from './geography.js';
-import {makeRoute,sampleRoute,routeDistance} from './transport-math.js';
+import {project} from './geography.js';
+import {makeRoute, sampleRoute, routeDistance} from './transport-math.js';
 import {makeSign} from './metro.js';
-export function createTunnels(scene){
- const root=new T.Group();root.visible=false;root.name='Nove de Julho tunnel study';scene.add(root);root.userData.colliders=[];
- const routes=source.ways.filter(w=>w.tags.highway).map(w=>({...makeRoute(w.points.map(([lon,lat])=>{const p=project(lat,lon);return [p.x,p.z];})),id:w.id,name:w.tags['tunnel:name']||'Túnel Nove de Julho'}));
- const concrete=new T.MeshStandardMaterial({color:'#656b68',roughness:.96,side:T.DoubleSide}),road=new T.MeshStandardMaterial({color:'#353a3b',roughness:.93}),light=new T.MeshBasicMaterial({color:'#fff3cd'}),white=new T.MeshStandardMaterial({color:'#dedbc6',roughness:.8});
- function box(x,y,z,w,h,d,mat,yaw=0){const m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);m.rotation.y=yaw;m.receiveShadow=true;root.add(m);return m;}
- const outer=5,inner=4.65;const shape=new T.Shape();shape.moveTo(-outer,0);shape.lineTo(-outer,1.3);for(let i=0;i<=32;i++){const a=Math.PI-i*Math.PI/32;shape.lineTo(Math.cos(a)*outer,1.3+Math.sin(a)*outer);}shape.lineTo(outer,0);shape.lineTo(inner,0);shape.lineTo(inner,1.3);for(let i=0;i<=32;i++){const a=i*Math.PI/32;shape.lineTo(Math.cos(a)*inner,1.3+Math.sin(a)*inner);}shape.lineTo(-inner,0);shape.closePath();
- for(const route of routes){for(let i=1;i<route.points.length;i++){const a=route.points[i-1],b=route.points[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]),yaw=Math.atan2(b[0]-a[0],b[1]-a[1]);if(len<.05)continue;const shell=new T.Mesh(new T.ExtrudeGeometry(shape,{depth:len+.1,bevelEnabled:false,steps:1}),concrete);shell.position.set(a[0],0,a[1]);shell.rotation.y=yaw;root.add(shell);box((a[0]+b[0])/2,-.1,(a[1]+b[1])/2,9.3,.2,len+.1,road,yaw);for(let d=0;d<len;d+=12){const p=sampleRoute(route,route.lengths[i-1]+d);box(p.x,.012,p.z,.14,.025,4,white,yaw);}}
-  for(let d=10;d<route.length;d+=24){const p=sampleRoute(route,d);box(p.x,5.55,p.z,.15,.08,3.5,light,p.yaw);}
- }
- batchStatic(root);
- root.add(new T.HemisphereLight('#c3c9c4','#4d514c',.7));
- const localLights=[-16,0,16].map(()=>{const lamp=new T.PointLight('#ffe9bf',100,38,2);root.add(lamp);return lamp;});
- const portals=routes.flatMap((r,i)=>[0,r.length].map((d,end)=>({...sampleRoute(r,d),route:i,end,name:'Túnel Nove de Julho',type:'tunnel'})));
- return {root,routes,portals,source,update(player){const candidates=routes.map(route=>({route,...routeDistance(route,player.x,player.z)})).sort((a,b)=>a.distance-b.distance);const nearest=candidates[0];localLights.forEach((lamp,i)=>{const p=sampleRoute(nearest.route,nearest.along+(i-1)*16);lamp.position.set(p.x,4.8,p.z);});},canMove(x,z){return routes.some(r=>routeDistance(r,x,z).distance<3.9);},entry(portal){const r=routes[portal.route],d=portal.end?r.length-12:12,p=sampleRoute(r,d);return {...p,y:0,yaw:p.yaw+(portal.end?Math.PI:0)};},nearestPortal(x,z){return portals.toSorted((a,b)=>Math.hypot(x-a.x,z-a.z)-Math.hypot(x-b.x,z-b.z))[0];}};
+import {sweepTunnelSection} from './tunnel-geometry.js';
+
+const liningRadius = 4.8;
+const springHeight = 1.5;
+const fixtureSpacing = 14;
+const unitBox = new T.BoxGeometry(1, 1, 1);
+const tunnelProfile = Array.from({length: 25}, (_, i) => {
+ const angle = Math.PI * (1 - i / 24);
+ return [Math.cos(angle) * liningRadius, springHeight + Math.sin(angle) * liningRadius];
+});
+tunnelProfile.unshift([-liningRadius, 0]);
+tunnelProfile.push([liningRadius, 0]);
+
+function box(parent, x, y, z, w, h, d, material, yaw = 0) {
+ const mesh = new T.Mesh(unitBox, material);
+ mesh.position.set(x, y, z);
+ mesh.scale.set(w, h, d);
+ mesh.rotation.y = yaw;
+ parent.add(mesh);
+ return mesh;
 }
-export function addTunnelPortals(parent,tunnels){const group=new T.Group();parent.add(group);for(const p of tunnels.portals){const sign=makeSign('TÚNEL NOVE DE JULHO ↓',7,.7,'#385c54');sign.position.set(p.x,15.2,p.z);sign.rotation.y=p.yaw;group.add(sign);}return group;}
+
+function surface(parent, route, section, material, options) {
+ parent.add(new T.Mesh(sweepTunnelSection(route, section, options), material));
+}
+
+function addBore(parent, route, materials) {
+ const {concrete, road, walkway, liner, steel, lamp, paint, edgePaint} = materials;
+ surface(parent, route, tunnelProfile, concrete, {reverse: true, repeat: 3.7});
+ surface(parent, route, [[-4.82, 0], [4.82, 0]], road, {repeat: 4.4});
+ // Short upstands and ceramic panels give the vault a legible base.
+ surface(parent, route, [[-4.79, .12], [-3.86, .12], [-3.81, 0]], walkway, {repeat: 1.5});
+ surface(parent, route, [[3.81, 0], [3.86, .12], [4.79, .12]], walkway, {repeat: 1.5});
+ surface(parent, route, [[-4.77, .08], [-4.77, 1.47]], liner, {reverse: true, repeat: 1.4});
+ surface(parent, route, [[4.77, 1.47], [4.77, .08]], liner, {reverse: true, repeat: 1.4});
+ for (const lateral of [-3.7, 3.7]) {
+  surface(parent, route, [[lateral - .04, .014], [lateral + .04, .014]], edgePaint);
+ }
+
+ for (let distance = 5; distance + 4 < route.length; distance += 12) {
+  const point = sampleRoute(route, distance);
+  box(parent, point.x, .013, point.z, .11, .012, 4, paint, point.yaw);
+ }
+
+ const fixtures = [];
+ for (let distance = 4; distance < route.length; distance += fixtureSpacing) {
+  const point = sampleRoute(route, distance, 2.55);
+  box(parent, point.x, 5.19, point.z, .48, .14, 2.08, steel, point.yaw);
+  box(parent, point.x, 5.10, point.z, .38, .08, 1.84, lamp, point.yaw);
+  fixtures.push({...point, y: 4.9, along: distance});
+ }
+
+ for (let distance = 25; distance < route.length - 10; distance += 82) {
+  const point = sampleRoute(route, distance, 4.71);
+  const sign = makeSign('SAÍDA ↑', .85, .29, '#116148');
+  sign.position.set(point.x, 1.92, point.z);
+  sign.rotation.y = point.yaw - Math.PI / 2;
+  parent.add(sign);
+  box(parent, point.x, .78, point.z + .5, .14, .78, .49, materials.cabinet, point.yaw);
+ }
+ return fixtures;
+}
+
+export function createTunnels(scene) {
+ const root = new T.Group();
+ root.visible = false;
+ root.name = 'Nove de Julho tunnel study';
+ root.userData.colliders = [];
+ scene.add(root);
+
+ const routes = source.ways.filter(way => way.tags.highway).map(way => {
+  const route = makeRoute(way.points.map(([lon, lat]) => {
+   const {x, z} = project(lat, lon);
+   return [x, z];
+  }));
+  return {...route, id: way.id, name: way.tags['tunnel:name'] || 'Túnel Nove de Julho'};
+ });
+
+ const concrete = pbrMaterial('concrete_pavement');
+ concrete.color.set('#909891');
+ concrete.normalScale.set(.5, .5);
+ const road = pbrMaterial('asphalt_02');
+ road.color.set('#b9beb9');
+ road.normalScale.set(.48, .48);
+ const walkway = pbrMaterial('concrete_pavement');
+ walkway.color.set('#aaa597');
+ const liner = pbrMaterial('concrete_pavement');
+ liner.color.set('#b9bdb0');
+ liner.normalScale.set(.18, .18);
+ const materials = {
+  concrete, road, walkway, liner,
+  steel: new T.MeshStandardMaterial({color: '#333f3c', roughness: .59, metalness: .6}),
+  lamp: new T.MeshBasicMaterial({color: '#fff4d3', toneMapped: false}),
+  paint: new T.MeshStandardMaterial({color: '#ece8d3', roughness: .87}),
+  edgePaint: new T.MeshStandardMaterial({color: '#b9b099', roughness: .88}),
+  cabinet: new T.MeshStandardMaterial({color: '#81473a', roughness: .67}),
+ };
+ const fixturesByRoute = routes.map(route => addBore(root, route, materials));
+ batchStatic(root);
+ root.add(new T.HemisphereLight('#c3c9c4', '#4d514c', .58));
+
+ const localLights = Array.from({length: 3}, () => {
+  const light = new T.PointLight('#fff1d1', 128, 29, 2);
+  root.add(light);
+  return light;
+ });
+ const portals = routes.flatMap((route, i) => [0, route.length].map((distance, end) => ({
+  ...sampleRoute(route, distance), route: i, end, name: 'Túnel Nove de Julho', type: 'tunnel',
+ })));
+
+ return {
+  root, routes, portals, source,
+  update(player) {
+   const sections = routes.map((route, index) => ({...routeDistance(route, player.x, player.z), index}));
+   const nearest = sections.reduce((a, b) => a.distance < b.distance ? a : b);
+   const fixtures = fixturesByRoute[nearest.index];
+   const center = Math.round((nearest.along - 4) / fixtureSpacing);
+   localLights.forEach((light, index) => {
+    const fixture = fixtures[center + index - 1];
+    light.intensity = fixture ? 128 : 0;
+    if (fixture) light.position.set(fixture.x, fixture.y, fixture.z);
+   });
+  },
+  canMove(x, z) {
+   return routes.some(route => routeDistance(route, x, z).distance < 3.9);
+  },
+  entry(portal) {
+   const route = routes[portal.route];
+   const point = sampleRoute(route, portal.end ? route.length - 12 : 12);
+   return {...point, y: 0, yaw: point.yaw + (portal.end ? Math.PI : 0)};
+  },
+  nearestPortal(x, z) {
+   return portals.reduce((nearest, candidate) =>
+    Math.hypot(x - candidate.x, z - candidate.z) < Math.hypot(x - nearest.x, z - nearest.z) ? candidate : nearest);
+  },
+ };
+}
+
+export function addTunnelPortals(parent, tunnels) {
+ const group = new T.Group();
+ const metal = new T.MeshStandardMaterial({color: '#435357', metalness: .55, roughness: .49});
+ parent.add(group);
+ for (const portal of tunnels.portals) {
+  const frame = new T.Group();
+  frame.rotation.y = portal.yaw;
+  frame.position.set(portal.x, 12, portal.z);
+  group.add(frame);
+  const sign = makeSign('TÚNEL NOVE DE JULHO ↓', 7, .7, '#385c54');
+  sign.position.y = 4.75;
+  frame.add(sign);
+  for (const x of [-3.7, 3.7]) box(frame, x, 2.38, 0, .1, 4.75, .1, metal);
+  box(frame, 0, 4.75, -.05, 7.5, .085, .085, metal);
+ }
+ return group;
+}

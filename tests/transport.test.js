@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {makeRoute,sampleRoute,routeDistance,joinRoads,stepDrive,trainMotion,stationCanMove,stationGroundHeight} from '../src/transport-math.js';
 import {roadRecords} from '../src/geography.js';
+import {nearPaulistaCrossing, paulistaCrossings, signalTarget} from '../src/street-layout.js';
 import source from '../src/transport-source.json' with {type:'json'};
 
 test('Paulista carriageways remain separate, connected and opposite in direction',()=>{
@@ -40,4 +41,26 @@ test('source keeps both tunnel carriageways and mapped station entrances',()=>{
  assert.equal(source.ways.filter(w=>w.tags.highway==='primary').length,2);
  assert.equal(source.entrances.length,3);assert.ok(source.ways.filter(w=>w.tags.railway==='subway').length>=2);
  assert.ok(source.limitations.some(s=>s.includes('not a depth')));
+});
+test('Paulista crossings pair both directions and orient stop lines before the intersection', () => {
+ const names = new Set(paulistaCrossings.map(crossing => crossing.name));
+ assert.equal(names.size, 3);
+ for (const name of names) {
+  const pair = paulistaCrossings.filter(crossing => crossing.name === name);
+  assert.equal(pair.length, 2);
+  assert.notEqual(pair[0].route, pair[1].route);
+  for (const crossing of pair) {
+   assert.equal(crossing.along - crossing.stop, 10);
+   assert.ok(nearPaulistaCrossing(crossing.route, crossing.along));
+   assert.equal(nearPaulistaCrossing(crossing.route, crossing.along - 16), false);
+  }
+ }
+});
+test('red holds the car at the line and amber lets a car already too close proceed', () => {
+ assert.deepEqual(signalTarget(8, 0, 'red'), {speed: 0, stop: true});
+ assert.ok(signalTarget(8, 6, 'red').speed < 8);
+ assert.equal(signalTarget(8, 6, 'amber').stop, false);
+ assert.equal(signalTarget(8, 20, 'amber').stop, true);
+ assert.equal(signalTarget(8, -1, 'red').stop, false);
+ assert.equal(signalTarget(8, 3, 'green').stop, false);
 });

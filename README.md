@@ -1,8 +1,15 @@
 # NEXUS — São Paulo / Solo
 
-**Versão 0.5: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
+**Versão 0.6: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
 
 O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
+
+## Exploração na versão 0.6
+
+- Use **M** ou clique no minimapa para marcar um destino. A seta indica a direção e a distância em linha reta. Na história, o objetivo atual aparece automaticamente.
+- A visão geral distingue os locais jogáveis dos pontos de referência. A roda do mouse ajusta a distância da câmera e **C** alterna a vista panorâmica na superfície.
+- Os pedestres percorrem trajetos junto às calçadas. Cruzamentos da Paulista receberam faixas, guias e semáforos ligados ao trânsito do jogo.
+- A estação ganhou letreiros de chegada, sinalização e trens com interiores visíveis quando as portas abrem. A geometria dos túneis acompanha o traçado mapeado, com pavimento contínuo, faixas e iluminação ao longo das curvas.
 
 ## Revisão visual 0.5
 
