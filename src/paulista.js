@@ -13,12 +13,13 @@ export const paulistaSpawn={x:masp.center.x-masp.normal[0]*49,z:masp.center.z-ma
 export const paulistaHeading=Math.atan2(-masp.normal[0],-masp.normal[1]);
 export function createPaulista(scene){
  const root=new T.Group(),colliders=[];root.name='MASP and Trianon reconstruction';scene.add(root);
+ const walkingStrips=[];
  const base=12,loader=new T.TextureLoader(),boxGeo=new T.BoxGeometry(1,1,1),concrete=pbrMaterial('concrete_pavement',5),paving=pbrMaterial('concrete_pavement',20),asphalt=pbrMaterial('asphalt_02',1),metal=new T.MeshStandardMaterial({color:'#36454b',metalness:.65,roughness:.35}),red=new T.MeshStandardMaterial({color:'#a81f16',roughness:.83,metalness:0}),white=new T.MeshStandardMaterial({color:'#d7d6be',roughness:.9});
  concrete.color.set('#9b9a92');paving.color.set('#aead9e');
  function cube(parent,x,y,z,w,h,d,material){const mesh=new T.Mesh(boxGeo,material);mesh.position.set(x,y+h/2,z);mesh.scale.set(w,h,d);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;}
  function surface(points,y,material){const shape=new T.Shape(points.map(p=>new T.Vector2(p[0],-p[1]))),g=new T.ShapeGeometry(shape);g.rotateX(-Math.PI/2);const a=g.attributes.position,uv=g.attributes.uv;for(let i=0;i<a.count;i++)uv.setXY(i,a.getX(i)/4,a.getZ(i)/4);const m=new T.Mesh(g,material);m.position.y=y;m.receiveShadow=true;root.add(m);return m;}
  const ground=new T.Mesh(new T.PlaneGeometry(1600,1600),new T.MeshStandardMaterial({color:'#777c70',roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.set(-100,base-.07,150);ground.receiveShadow=true;root.add(ground);
- function ribbon(points,width,y,material){const vertices=[],uvs=[],indices=[];let total=0;for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len<.01)continue;const nx=-(b[1]-a[1])/len,nz=(b[0]-a[0])/len,k=vertices.length/3;for(const [p,t]of [[a,total],[b,total+len]])for(const sign of [-1,1]){vertices.push(p[0]+nx*width/2*sign,y,p[1]+nz*width/2*sign);uvs.push(sign*width/8,t/4);}indices.push(k,k+1,k+2,k+1,k+3,k+2);total+=len;}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));g.setIndex(indices);g.computeVertexNormals();const mesh=new T.Mesh(g,material);mesh.receiveShadow=true;root.add(mesh);return mesh;}
+ function ribbon(points,width,y,material){const vertices=[],uvs=[],indices=[];let total=0;for(let i=1;i<points.length;i++){const a=points[i-1],b=points[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len<.01)continue;const nx=-(b[1]-a[1])/len,nz=(b[0]-a[0])/len,k=vertices.length/3;if(material!==white)walkingStrips.push({x:a[0],z:a[1],nx,nz,len,half:width/2,y});for(const [p,t]of [[a,total],[b,total+len]])for(const sign of [-1,1]){vertices.push(p[0]+nx*width/2*sign,y,p[1]+nz*width/2*sign);uvs.push(sign*width/8,t/4);}indices.push(k,k+1,k+2,k+1,k+3,k+2);total+=len;}const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(vertices,3));g.setAttribute('uv',new T.Float32BufferAttribute(uvs,2));g.setIndex(indices);g.computeVertexNormals();const mesh=new T.Mesh(g,material);mesh.receiveShadow=true;root.add(mesh);return mesh;}
  const localRoads=roadRecords.filter(r=>!r.tunnel&&r.layer>=0&&r.points.some(p=>Math.hypot(p[0],p[1])<550));
  for(const r of localRoads){const avenue=r.name==='Avenida Paulista',width=avenue?13:r.kind==='primary'?14:8;ribbon(r.points,width+5,base+.02,paving);ribbon(r.points,width,base+.055,asphalt);if(avenue){for(let i=1;i<r.points.length;i++){const a=r.points[i-1],b=r.points[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);if(len<3)continue;for(let t=0;t<len;t+=12){const u=t/len,v=Math.min(1,(t+4)/len);ribbon([[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u],[a[0]+(b[0]-a[0])*v,a[1]+(b[1]-a[1])*v]],.16,base+.07,white);}}}}
  const soil=new T.MeshStandardMaterial({color:'#4f5c3e',roughness:1});for(const polygon of trianonPolygons)surface(polygon,base+.1,soil);
@@ -43,5 +44,18 @@ export function createPaulista(scene){
  const ready=assets.loadAsync('/assets/props/tree_road.glb').then(g=>{const box=new T.Box3().setFromObject(g.scene),height=box.max.y-box.min.y;const geometries=[];g.scene.updateMatrixWorld(true);g.scene.traverse(o=>{if(o.isMesh)geometries.push({geometry:o.geometry.clone().applyMatrix4(o.matrixWorld),material:o.material});});for(const part of geometries){const mesh=new T.InstancedMesh(part.geometry,part.material,treeLocations.length),dummy=new T.Object3D();treeLocations.forEach((p,i)=>{const scale=(p.mapped?9:6)+(i%7);dummy.position.set(p.x,base-box.min.y*scale/height,p.z);dummy.rotation.y=i*2.4;dummy.scale.setScalar(scale/height);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);});mesh.castShadow=true;mesh.receiveShadow=true;props.add(mesh);}loaded=treeLocations.length;}).catch(e=>console.warn('Vegetation could not be loaded',e));
  const perimeter=[];for(const polygon of trianonPolygons){const points=polygon.slice();if(points.length&&Math.hypot(points[0][0]-points.at(-1)[0],points[0][1]-points.at(-1)[1])>.1)points.push(points[0]);perimeter.push(points);}
  const fenceMaterial=new T.MeshStandardMaterial({color:'#3f4842',metalness:.65,roughness:.6});for(const polygon of perimeter)for(let i=1;i<polygon.length;i++){const a=polygon[i-1],b=polygon[i],len=Math.hypot(b[0]-a[0],b[1]-a[1]);for(let d=0;d<len;d+=2.2){const t=d/len,x=a[0]+(b[0]-a[0])*t,z=a[1]+(b[1]-a[1])*t;if(Math.hypot(x-trianonEntrance.x,z-trianonEntrance.z)<5)continue;cube(root,x,base,z,.05,1.8,.05,fenceMaterial);}}
- const detailsReady=addStreetDetails(root,colliders);batchStatic(root);return {root,colliders,bounds,ready:Promise.allSettled([ready,detailsReady]),get treeCount(){return loaded;},get source(){return masp;},groundHeight(){return base;}};
+ function groundHeight(x,z){
+  const dx=x-masp.center.x,dz=z-masp.center.z;
+  const underMasp=Math.abs(dx*masp.axis[0]+dz*masp.axis[1])<L/2+8&&
+   Math.abs(dx*masp.normal[0]+dz*masp.normal[1])<D/2+14;
+  let height=inTrianon(x,z)?base+.1:underMasp?base+.08:base-.07;
+  for(const strip of walkingStrips){
+   if(strip.y<=height)continue;
+   const offsetX=x-strip.x,offsetZ=z-strip.z;
+   const along=offsetX*strip.nz-offsetZ*strip.nx;
+   if(along>=0&&along<=strip.len&&Math.abs(offsetX*strip.nx+offsetZ*strip.nz)<=strip.half)height=strip.y;
+  }
+  return height;
+ }
+ const detailsReady=addStreetDetails(root,colliders);batchStatic(root);return {root,colliders,bounds,ready:Promise.allSettled([ready,detailsReady]),get treeCount(){return loaded;},get source(){return masp;},groundHeight};
 }

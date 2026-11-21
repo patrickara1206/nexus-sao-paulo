@@ -1,36 +1,300 @@
-import * as T from 'three';import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-let templatePromise;const loader=new GLTFLoader();
-export const defaultAppearance={name:'Paulista',gender:'Não-binário',body:.5,build:.5,height:1.75,skin:'#b8835b',hair:'#251d18',hairStyle:'curto',shirt:'#d8d6ce',pants:'#263547',bodyHair:1,pubicHair:'natural',outfit:'casual'};
-export function loadHuman(){return templatePromise??=loader.loadAsync('/assets/human/adult.glb').then(g=>{let mesh;g.scene.traverse(o=>{if(o.isMesh)mesh=o;});return mesh;});}
-export async function createHuman(appearance={}){const base=await loadHuman(),root=new T.Group(),person=new T.Group(),a={...defaultAppearance,...appearance};const uniforms={skin:{value:new T.Color(a.skin)},shirt:{value:new T.Color(a.shirt)},pants:{value:new T.Color(a.pants)},phase:{value:0},move:{value:0},bulk:{value:a.build},hairDensity:{value:a.bodyHair},bodyNorm:{value:1},baseY:{value:0}};const material=new T.MeshPhysicalMaterial({color:'white',roughness:.86,metalness:0,clearcoat:0,side:T.DoubleSide});
- material.onBeforeCompile=s=>{Object.assign(s.uniforms,uniforms);s.vertexShader='varying vec3 vBody;uniform float phase;uniform float move;uniform float bulk;uniform float bodyNorm;uniform float baseY;\n'+s.vertexShader;s.vertexShader=s.vertexShader.replace('#include <morphtarget_vertex>',`#include <morphtarget_vertex>
-transformed.y-=baseY;transformed*=bodyNorm;vBody=transformed;
-float belly=exp(-pow((transformed.y-1.03)*4.,2.));
-transformed.x*=1.+(bulk-.5)*.4*belly;transformed.z*=1.+(bulk-.5)*.6*belly;
-// Fit a loose cloth envelope instead of painting the chest surface.
-if(transformed.y>.94&&transformed.y<1.44&&abs(transformed.x)<.27){
- float rx=.25+bulk*.06;float rz=.145+bulk*.055;
- if(transformed.z<-.025){transformed.z=-rz*sqrt(max(.03,1.-pow(transformed.x/rx,2.)))-.012;transformed.z+=.0025*sin(transformed.y*65.+transformed.x*24.);}
- transformed.x*=1.045;
+import * as T from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {createAvatarFootwear} from './avatar-footwear.js';
+import {createAvatarHair} from './avatar-hair.js';
+
+const loader=new GLTFLoader();
+const textureLoader=new T.TextureLoader();
+let templatePromise,outfitPromise,skinPromise;
+export const defaultAppearance={
+ name:'Paulista',gender:'Não-binário',body:.5,build:.5,height:1.75,skin:'#b8835b',
+ hair:'#251d18',hairStyle:'curto',shirt:'#d8d6ce',pants:'#263547',bodyHair:1,
+ pubicHair:'natural',outfit:'casual',
+};
+
+export function loadHuman(){
+ return templatePromise??=loader.loadAsync('/assets/human/adult.glb').then(asset=>{
+  let body;
+  asset.scene.traverse(node=>{if(node.isMesh)body=node;});
+  return body;
+ });
 }
 
-if(transformed.y<.88){float swing=sin(phase+step(0.,transformed.x)*3.14159)*.42*move;float ly=transformed.y-.88;float lz=transformed.z;transformed.y=.88+ly*cos(swing)-lz*sin(swing);transformed.z=ly*sin(swing)+lz*cos(swing);}
-if(abs(transformed.x)>.21&&transformed.y>.65&&transformed.y<1.48){float side=sign(transformed.x);float amount=smoothstep(.21,.32,abs(transformed.x));float angle=-side*.18*amount;vec2 arm=transformed.xy-vec2(side*.21,1.4);transformed.xy=vec2(arm.x*cos(angle)-arm.y*sin(angle),arm.x*sin(angle)+arm.y*cos(angle))+vec2(side*.21,1.4);float amount2=smoothstep(.24,.44,abs(transformed.x));transformed.z+=sin(phase+step(0.,transformed.x)*3.14159)*.17*move*amount2;}
-transformed.y+=abs(sin(phase))*move*.025;`);
- s.fragmentShader='varying vec3 vBody;uniform vec3 skin;uniform vec3 shirt;uniform vec3 pants;uniform float hairDensity;\n'+s.fragmentShader;s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-float hand=step(.46,abs(vBody.x));
-float collar=1.465+.045*smoothstep(.035,.12,abs(vBody.x));float isShirt=step(.91,vBody.y)*step(vBody.y,collar)*(1.-hand);
-float isPants=step(vBody.y,.94)*(1.-step(.34,abs(vBody.x)));
-vec3 base=mix(skin,shirt,isShirt);base=mix(base,pants,isPants);
-float shoe=step(vBody.y,.17);base=mix(base,mix(vec3(.055,.06,.065),vec3(.32,.33,.30),step(vBody.y,.025)),shoe);
-float pore=fract(sin(dot(vBody.xy+vBody.zz,vec2(1229.8,7823.3)))*43758.54);
-float hairZone=(1.-isShirt)*(1.-isPants)*step(vBody.y,1.42)*step(.5,vBody.y);
-base=mix(base,base*.45,step(.97-hairDensity*.008,pore)*hairZone*.4);
-float fabric=.97+.03*sin(vBody.x*900.)*sin(vBody.y*900.);
-diffuseColor.rgb=base*mix(.98+pore*.04,fabric,max(isShirt,isPants));`);};
- const mesh=base.clone();mesh.material=material;mesh.castShadow=true;mesh.receiveShadow=true;person.add(mesh);root.add(person);
- const hairGroup=new T.Group();person.add(hairGroup);function refreshHair(){while(hairGroup.children.length){const o=hairGroup.children[0];hairGroup.remove(o);o.geometry?.dispose();o.material?.dispose();}if(a.hairStyle==='raspado')return;const hairMat=new T.MeshStandardMaterial({color:a.hair,roughness:.95});const cap=new T.Mesh(new T.SphereGeometry(1,24,14,0,Math.PI*2,0,Math.PI*.62),hairMat);cap.position.set(0,1.745,-.04);cap.scale.set(.092,.08,.105);cap.castShadow=true;hairGroup.add(cap);if(a.hairStyle==='longo'){const back=new T.Mesh(new T.SphereGeometry(1,20,14),hairMat);back.position.set(0,1.60,.025);back.scale.set(.105,.19,.07);hairGroup.add(back);}if(a.hairStyle==='cacheado'){for(let i=0;i<24;i++){const theta=i*2.4,r=.07*Math.sqrt(i/24),o=new T.Mesh(new T.SphereGeometry(.025,8,6),hairMat);o.position.set(Math.cos(theta)*r,1.82-Math.abs(r)*.5,Math.sin(theta)*r-.04);hairGroup.add(o);}}}
- function apply(next){Object.assign(a,next);mesh.morphTargetInfluences[0]=Math.max(0,Math.min(1,Number(a.body)));const position=mesh.geometry.attributes.position,morph=mesh.geometry.morphAttributes.position[0];let min=Infinity,max=-Infinity;for(let i=0;i<position.count;i++){const y=position.getY(i)+morph.getY(i)*mesh.morphTargetInfluences[0];min=Math.min(min,y);max=Math.max(max,y);}uniforms.bodyNorm.value=1.78/(max-min);uniforms.baseY.value=min;root.scale.setScalar(a.height/1.78);uniforms.skin.value.set(a.skin);uniforms.shirt.value.set(a.shirt);uniforms.pants.value.set(a.pants);uniforms.bulk.value=Number(a.build);uniforms.hairDensity.value=Number(a.bodyHair);refreshHair();}
- apply(a);return {root,person,mesh,appearance:a,apply,animate(time,speed=0){uniforms.phase.value=time*(speed>6?11:7);uniforms.move.value=Math.min(1,speed/4);},dispose(){material.dispose();}};
+function loadOutfit(body){
+ return outfitPromise??=loader.loadAsync('/assets/human/casual-outfit.glb').then(asset=>{
+  const shirt=asset.scene.getObjectByName('Shirt');
+  const trousers=asset.scene.getObjectByName('Trousers');
+  if(!shirt?.morphTargetInfluences?.length||!trousers?.morphTargetInfluences?.length){
+   throw new Error('Outfit is missing adjustable garments');
+  }
+  const hidden=new Set(asset.scene.userData.hiddenBodyTriangles??[]);
+  const indices=body.geometry.index.array;
+  if(!hidden.size||hidden.size>=indices.length/3)throw new Error('Outfit has an invalid body mask');
+  const visible=[];
+  for(let triangle=0;triangle<indices.length/3;triangle++){
+   if(!hidden.has(triangle))visible.push(indices[triangle*3],indices[triangle*3+1],indices[triangle*3+2]);
+  }
+  const masked=body.geometry.clone();
+  masked.setIndex(visible);
+  return {shirt,trousers,masked};
+ }).catch(error=>{
+  console.warn('Não foi possível carregar o conjunto 3D.',error);
+  return null;
+ });
 }
-export async function characterStudio(canvas,appearance,onChange){const renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;const scene=new T.Scene(),camera=new T.PerspectiveCamera(34,1,.02,20);camera.position.set(0,1.0,3.3);camera.lookAt(0,.98,0);scene.add(new T.HemisphereLight('#eef5ff','#58616b',2));const key=new T.DirectionalLight('#ffedd7',3);key.position.set(2,3,3);scene.add(key);const rim=new T.DirectionalLight('#a4c9ef',2);rim.position.set(-2,2,-2);scene.add(rim);const human=await createHuman(appearance);human.root.rotation.y=Math.PI;scene.add(human.root);let active=true;function frame(t){if(!active)return;requestAnimationFrame(frame);const r=canvas.getBoundingClientRect();if(!r.width||!r.height)return;if(canvas.width!==Math.round(r.width*renderer.getPixelRatio())||canvas.height!==Math.round(r.height*renderer.getPixelRatio())){renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();}human.animate(t*.001,0);renderer.render(scene,camera);}requestAnimationFrame(frame);let drag;canvas.onpointerdown=e=>{drag=e.clientX;canvas.setPointerCapture(e.pointerId);};canvas.onpointermove=e=>{if(drag===undefined)return;human.root.rotation.y+=(e.clientX-drag)*.01;drag=e.clientX;};canvas.onpointerup=()=>drag=undefined;return {apply(value){human.apply(value);onChange?.(human.appearance);},dispose(){active=false;renderer.dispose();human.dispose();}};}
+
+function loadSkin(){
+ return skinPromise??=textureLoader.loadAsync('/assets/human/skin-detail.jpg').then(texture=>{
+  texture.colorSpace=T.SRGBColorSpace;
+  return texture;
+ }).catch(error=>{
+  console.warn('Não foi possível carregar a textura da pele.',error);
+  return null;
+ });
+}
+
+const poseUniforms=`
+ uniform float phase, move, idle, bulk, bodyNorm, baseY;
+ varying vec3 vBody;
+`;
+const poseVertex=`
+ transformed.y-=baseY;
+ transformed*=bodyNorm;
+ vBody=transformed;
+ float buildWeight=exp(-pow((transformed.y-1.07)*4.,2.));
+ transformed.x*=1.+(bulk-.5)*.36*buildWeight;
+ transformed.z*=1.+(bulk-.5)*.42*buildWeight;
+ float side=sign(transformed.x);
+ float cycle=phase+step(0.,transformed.x)*3.14159265;
+
+ // Blend across the hip so the trousers crease instead of breaking at the waist.
+ if(transformed.y<.88){
+  float swing=sin(cycle)*.42*move;
+  float blend=1.-smoothstep(.72,.88,transformed.y);
+  vec2 leg=transformed.yz-vec2(.88,0.);
+  transformed.yz=mix(transformed.yz,vec2(leg.x*cos(swing)-leg.y*sin(swing),leg.x*sin(swing)+leg.y*cos(swing))+vec2(.88,0.),blend);
+ }
+ // The arm travels together with the sleeve and relaxes between strides.
+ float arm=smoothstep(.21,.34,abs(transformed.x))*(1.-smoothstep(1.36,1.53,transformed.y))*smoothstep(.64,.85,transformed.y);
+ float angle=-side*(.43+.015*sin(idle+side)+side*.018)*arm;
+ vec2 wrist=transformed.xy-vec2(side*.185,1.425);
+ transformed.xy=vec2(wrist.x*cos(angle)-wrist.y*sin(angle),wrist.x*sin(angle)+wrist.y*cos(angle))+vec2(side*.185,1.425);
+ transformed.z+=sin(cycle)*.11*move*arm;
+ float upper=smoothstep(.7,1.48,transformed.y);
+ transformed.x+=sin(idle)*.005*upper;
+ transformed.y+=abs(sin(phase))*move*.025;
+`;
+
+function poseMaterial(material,uniforms,kind){
+ material.onBeforeCompile=shader=>{
+  Object.assign(shader.uniforms,uniforms);
+  shader.vertexShader=poseUniforms+shader.vertexShader;
+  shader.vertexShader=shader.vertexShader.replace('#include <morphtarget_vertex>',`#include <morphtarget_vertex>
+   ${poseVertex}`);
+  if(kind==='depth')return;
+  shader.fragmentShader=`
+   varying vec3 vBody;
+   uniform vec3 skin, shirt, pants;
+   uniform float hairDensity, usingClothes;
+  `+shader.fragmentShader;
+  if(kind==='skin'){
+   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    float arm=abs(vBody.x);
+    float neckline=1.488+.025*smoothstep(.03,.12,arm);
+    float top=step(.89,vBody.y)*step(vBody.y,neckline)*(1.-step(.36,arm));
+    float trousers=step(vBody.y,.925);
+    float hosiery=step(vBody.y,.14);
+    top*=1.-usingClothes;
+    trousers*=1.-usingClothes;
+    vec3 base=mix(skin,shirt,top);
+    base=mix(base,pants,trousers);
+    float pores=fract(sin(dot(vBody.xy+vBody.zz,vec2(1229.8,7823.3)))*43758.54);
+    float visibleHair=(1.-top)*(1.-trousers)*step(vBody.y,1.43);
+    base=mix(base,base*.55,step(.989-hairDensity*.007,pores)*visibleHair*.36);
+    #ifdef USE_MAP
+     vec3 pigment=clamp(diffuseColor.rgb/vec3(.61,.43,.34),.11,1.85);
+     base*=mix(vec3(1.),pigment,.83*(1.-max(top,trousers)));
+    #endif
+    diffuseColor.rgb=mix(base,vec3(.042,.046,.048),hosiery);
+   `);
+  }else{
+   shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    vec3 tint=${kind==='shirt'?'shirt':'pants'};
+    float fibers=.965+.035*sin(vBody.x*820.)*sin(vBody.y*790.);
+    diffuseColor.rgb=tint*mix(vec3(.94),diffuseColor.rgb,.6)*fibers;
+   `);
+  }
+ };
+ material.customProgramCacheKey=()=>`nexus-avatar-07-${kind}`;
+ return material;
+}
+
+function morphBounds(geometry,body){
+ const position=geometry.attributes.position;
+ const morph=geometry.morphAttributes.position[0];
+ let min=Infinity,max=-Infinity;
+ for(let i=0;i<position.count;i++){
+  const y=position.getY(i)+(morph?.getY(i)??0)*body;
+  min=Math.min(min,y);
+  max=Math.max(max,y);
+ }
+ return {base:min,scale:1.78/(max-min)};
+}
+
+export async function createHuman(appearance={}){
+ const [template,skinDetail]=await Promise.all([loadHuman(),loadSkin()]);
+ const outfit=await loadOutfit(template);
+ const a={...defaultAppearance,...appearance};
+ const root=new T.Group(),person=new T.Group();
+ root.add(person);
+ const uniforms={
+  skin:{value:new T.Color(a.skin)},shirt:{value:new T.Color(a.shirt)},pants:{value:new T.Color(a.pants)},
+  phase:{value:0},move:{value:0},idle:{value:0},bulk:{value:a.build},
+  hairDensity:{value:a.bodyHair},bodyNorm:{value:1},baseY:{value:0},usingClothes:{value:outfit?1:0},
+ };
+ const material=poseMaterial(new T.MeshStandardMaterial({map:skinDetail,roughness:.72,side:T.DoubleSide}),uniforms,'skin');
+ const depth=poseMaterial(new T.MeshDepthMaterial({depthPacking:T.RGBADepthPacking}),uniforms,'depth');
+ const mesh=template.clone();
+ mesh.material=material;
+ if(outfit)mesh.geometry=outfit.masked;
+ mesh.customDepthMaterial=depth;
+ mesh.castShadow=true;
+ mesh.receiveShadow=true;
+ person.add(mesh);
+ const garments=[];
+ if(outfit){
+  for(const [kind,asset] of [['shirt',outfit.shirt],['pants',outfit.trousers]]){
+   const garment=asset.clone();
+   garment.material=poseMaterial(new T.MeshStandardMaterial({
+    color:'white',map:asset.material?.map??null,roughness:.91,side:T.DoubleSide,
+   }),uniforms,kind);
+   garment.customDepthMaterial=depth;
+   garment.castShadow=true;
+   garment.receiveShadow=true;
+   garments.push(garment);
+   person.add(garment);
+  }
+ }
+
+ const shoes=createAvatarFootwear(),hair=createAvatarHair();
+ person.add(shoes.root,hair.root);
+ let lastBody;
+ function apply(next){
+  Object.assign(a,next);
+  const body=T.MathUtils.clamp(Number(a.body),0,1);
+  if(body!==lastBody){
+   mesh.morphTargetInfluences[0]=body;
+   for(const garment of garments)garment.morphTargetInfluences[0]=body;
+   const bounds=morphBounds(mesh.geometry,body);
+   uniforms.bodyNorm.value=bounds.scale;
+   uniforms.baseY.value=bounds.base;
+   shoes.fit(body);
+   lastBody=body;
+  }
+  root.scale.setScalar(a.height/1.78);
+  uniforms.skin.value.set(a.skin);
+  uniforms.shirt.value.set(a.shirt);
+  uniforms.pants.value.set(a.pants);
+  uniforms.bulk.value=Number(a.build);
+  uniforms.hairDensity.value=Number(a.bodyHair);
+  hair.apply(a.hairStyle,a.hair,body);
+ }
+ apply(a);
+ shoes.pose(0,0);
+ return {
+  root,person,mesh,appearance:a,apply,
+  animate(time,speed=0){
+   uniforms.phase.value=time*(speed>6?11:7);
+   uniforms.move.value=Math.min(1,speed/4);
+   uniforms.idle.value=time*1.2;
+   shoes.pose(uniforms.phase.value,uniforms.move.value);
+  },
+  dispose(){
+   material.dispose();
+   for(const garment of garments)garment.material.dispose();
+   depth.dispose();shoes.dispose();hair.dispose();
+  },
+ };
+}
+
+export async function characterStudio(canvas,appearance){
+ const renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:true});
+ renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+ renderer.outputColorSpace=T.SRGBColorSpace;
+ renderer.toneMapping=T.ACESFilmicToneMapping;
+ renderer.toneMappingExposure=.92;
+ const scene=new T.Scene();
+ const camera=new T.PerspectiveCamera(31,1,.02,20);
+ scene.add(new T.HemisphereLight('#f9eee4','#59636e',1.45));
+ const key=new T.DirectionalLight('#fff1de',2.1);
+ key.position.set(-2.2,3.8,3.4);
+ scene.add(key);
+ const rim=new T.DirectionalLight('#b5d1df',1.2);
+ rim.position.set(1.7,2.7,-2.7);
+ scene.add(rim);
+ const fill=new T.DirectionalLight('#fff9f4',.42);
+ fill.position.set(2,1,2);
+ scene.add(fill);
+ const shadow=new T.Mesh(new T.PlaneGeometry(1.5,1.3),new T.ShaderMaterial({
+  transparent:true,depthWrite:false,
+  vertexShader:'varying vec2 tex;void main(){tex=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'varying vec2 tex;void main(){vec2 p=tex-.5;gl_FragColor=vec4(.025,.018,.014,.49*(1.-smoothstep(.04,.48,length(p))));}',
+ }));
+ shadow.rotation.x=-Math.PI/2;
+ shadow.position.set(0,-.013,-.035);
+ scene.add(shadow);
+ const human=await createHuman(appearance);
+ const initialHeading=Math.PI+.42;
+ let heading=initialHeading;
+ human.root.rotation.y=heading;
+ scene.add(human.root);
+ let active=true;
+ let previous=0;
+ function frame(time){
+  if(!active)return;
+  requestAnimationFrame(frame);
+  const width=canvas.clientWidth,height=canvas.clientHeight;
+  if(!width||!height||document.hidden||document.body.classList.contains('playing'))return;
+  const delta=Math.min((time-previous)*.001,.05);
+  previous=time;
+  const ratio=renderer.getPixelRatio();
+  if(canvas.width!==Math.floor(width*ratio)||canvas.height!==Math.floor(height*ratio)){
+   renderer.setSize(width,height,false);
+   camera.aspect=width/height;
+   camera.updateProjectionMatrix();
+  }
+  const headroom=Math.max(1.41,human.appearance.height)*.59;
+  const distance=headroom/(Math.tan(T.MathUtils.degToRad(camera.fov/2))*Math.min(1,camera.aspect*1.4));
+  const targetY=human.appearance.height*.49;
+  camera.position.set(0,targetY+.31,distance);
+  camera.lookAt(0,targetY,0);
+  human.root.rotation.y=T.MathUtils.lerp(human.root.rotation.y,heading,1-Math.exp(-delta*22));
+  human.animate(time*.001,0);
+  renderer.render(scene,camera);
+ }
+ requestAnimationFrame(frame);
+ let drag;
+ canvas.onpointerdown=event=>{
+  drag={id:event.pointerId,x:event.clientX};
+  canvas.setPointerCapture(event.pointerId);
+ };
+ canvas.onpointermove=event=>{
+  if(drag?.id!==event.pointerId)return;
+  heading+=(event.clientX-drag.x)*.012;
+  drag.x=event.clientX;
+ };
+ canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=()=>drag=undefined;
+ canvas.tabIndex=0;
+ canvas.addEventListener('keydown',event=>{
+  if(!['ArrowLeft','ArrowRight','Home'].includes(event.key))return;
+  event.preventDefault();
+  heading=event.key==='Home'?initialHeading:heading+(event.key==='ArrowRight'?.22:-.22);
+ });
+ return {apply(value){human.apply(value);},dispose(){
+  active=false;
+  shadow.geometry.dispose();
+  shadow.material.dispose();
+  renderer.dispose();
+  human.dispose();
+ }};
+}

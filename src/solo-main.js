@@ -276,7 +276,7 @@ function move(dt){
   const hit=raycaster.intersectObject(city.tiles.group,true)[0];
   if(hit)groundTarget=hit.point.y;
  }
- const level=space==='world'?groundTarget:space==='metro'?metro.groundHeight(player.x,player.z):0;
+ const level=space==='world'?(area==='paulista'&&!city.enabled?paulista.groundHeight(player.x,player.z):groundTarget):space==='metro'?metro.groundHeight(player.x,player.z):0;
  player.y=T.MathUtils.lerp(player.y,level,Math.min(1,dt*10));
  if(jumpRequested&&!jump&&jumpV===0)jumpV=6;
  jumpRequested=false;
@@ -333,7 +333,8 @@ function updatePedestrians(dt){
    npc.human.root.rotation.y=approachAngle(npc.human.root.rotation.y,next.yaw,1-Math.exp(-dt*9));
    npc.human.animate(time+i,1.3);
   }
-  npc.human.root.position.set(npc.x,city.enabled?player.y:12,npc.z);
+  const level=city.enabled?player.y:area==='paulista'?paulista.groundHeight(npc.x,npc.z):12;
+  npc.human.root.position.set(npc.x,level,npc.z);
  }
 }
 function frame(){
@@ -377,7 +378,7 @@ function frame(){
 }
 fillForm();frame();
 async function boot(){try{await loadHuman();avatar=await createHuman(state.appearance);scene.add(avatar.root);avatar.root.position.set(0,12,-65);studio=await characterStudio($('characterPreview'),state.appearance);for(const def of npcDefinitions){const human=await createHuman({...state.appearance,name:def.name,skin:def.skin,shirt:def.shirt,body:def.id==='marina'?.15:.8,hairStyle:def.id==='marina'?'longo':'curto'});human.root.position.set(def.x,12,def.z);actors.add(human.root);npcs.push({...def,origin:{x:def.x,z:def.z},human});}
- switchArea('paulista');try{city=await createPhotorealCity(scene,camera,renderer,status);}catch{city={enabled:false};}if(city.enabled){lab.root.visible=false;paulista.root.visible=false;$('mapCredits').hidden=false;$('cityConnectionTitle').textContent='Base fotogramétrica conectada';$('cityConnectionText').textContent='A cidade real será carregada por transmissão. A cobertura e os interiores ainda precisam de validação.';$('startStory').textContent='Iniciar história';$('startFree').textContent='Explorar São Paulo';status('Base real em carregamento · personagens e histórias fictícios.');}else{$('cityConnectionTitle').textContent='Primeiro trecho: MASP e Parque Trianon';$('cityConnectionText').textContent='Contornos e caminhos mapeados, edifício reconstruído com referências. Carro dirigível, trânsito, estação e túneis em reconstrução. Paulista Corporate modelado por referência; os demais prédios e regiões estão incompletos.';$('startStory').textContent='Começar na Paulista';$('startFree').textContent='Explorar livremente';status('Paulista · carro, metrô e túneis em reconstrução parcial.');}$('startStory').disabled=false;$('startFree').disabled=false;applyAppearance();updateUI();}catch(error){console.error(error);$('cityConnectionText').textContent='Não foi possível carregar o personagem. Recarregue para tentar novamente.';}}
+ switchArea('paulista');try{city=await createPhotorealCity(scene,camera,renderer,status);}catch{city={enabled:false};}if(city.enabled){lab.root.visible=false;paulista.root.visible=false;$('mapCredits').hidden=false;$('cityConnectionTitle').textContent='Base fotogramétrica conectada';$('cityConnectionText').textContent='A cidade real será carregada por transmissão. A cobertura e os interiores ainda precisam de validação.';$('startStory').textContent='Iniciar história';$('startFree').textContent='Explorar São Paulo';status('Base real em carregamento · personagens e histórias fictícios.');}else{$('cityConnectionTitle').textContent='Primeiro trecho: MASP e Parque Trianon';$('cityConnectionText').textContent='Explore a Paulista a pé, de carro e pelo metrô. A reconstrução se concentra no trecho do MASP e do Trianon.';$('startStory').textContent='Começar na Paulista';$('startFree').textContent='Explorar livremente';status('Paulista · carro, metrô e túneis em reconstrução parcial.');}$('startStory').disabled=false;$('startFree').disabled=false;applyAppearance();updateUI();}catch(error){console.error(error);$('cityConnectionText').textContent='Não foi possível carregar o personagem. Recarregue para tentar novamente.';}}
 boot();
 
 function switchArea(next){if(driving){driving=false;vehicles.own.speed=0;avatar.root.visible=true;}if(space!=='world')leaveSpace();area=next;lab.root.visible=next==='lab'&&!city.enabled;paulista.root.visible=next==='paulista'&&!city.enabled;Object.assign(player,next==='lab'?{x:0,z:-65,y:12}:paulistaSpawn);groundTarget=12;setPanorama(false);jump=jumpV=0;driveOrbit=0;pitch=.10;yaw=next==='lab'?Math.PI:paulistaHeading;avatar.root.rotation.y=yaw;for(let i=0;i<npcs.length;i++){const n=npcs[i];const def=npcDefinitions[i];n.x=next==='lab'?def.x:paulistaSpawn.x+paulista.source.axis[0]*(i<2?i*6+3:(i-6)*4);n.z=next==='lab'?def.z:paulistaSpawn.z+paulista.source.axis[1]*(i<2?i*6+3:(i-6)*4);if(n.walking){

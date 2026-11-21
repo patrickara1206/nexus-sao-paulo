@@ -1,8 +1,13 @@
 # NEXUS — São Paulo / Solo
 
-**Versão 0.6: trecho parcial do MASP/Trianon e base jogável solo, em desenvolvimento. O Centro Histórico completo e fiel ao real ainda não está entregue.**
+**Versão 0.7 — personagem e personalização revisados. O trecho jogável continua concentrado no entorno do MASP/Trianon.**
 
 O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
+
+## Personagem na versão 0.7
+
+- Camiseta, calça, tênis e cabelo em malhas 3D. A roupa acompanha a morfologia, o porte, a altura e as cores do personagem na prévia e no jogo. O tom escolhido mantém os detalhes da textura de pele.
+- Prévia em três quartos com iluminação de estúdio, fundo neutro e rotação por arraste ou pelas setas do teclado. A tecla **Home** restaura a vista inicial.
 
 ## Exploração na versão 0.6
 
@@ -48,7 +53,7 @@ Fontes e limitações estão em `src/masp-source.json`, `src/trianon.json` e `sr
 ## Implementado e utilizável
 
 - Criação e edição de personagem adulto: nome, gênero independente da apresentação corporal, morfologia, porte, altura, tom de pele, cabelo, cores das roupas e pelos corporais.
-- Base humana MakeHuman CC0 com 14.517 vértices e 26.756 triângulos, variação de morfologia e movimento procedural. Ainda precisa de rig e animações de produção, texturas de pele e roupas com geometria própria.
+- Base humana MakeHuman CC0 com 14.517 vértices e 26.756 triângulos antes de ocultar a superfície sob as roupas. A locomoção usa movimento procedural. Rig e animações de produção seguem pendentes.
 - Preferência de pelos púbicos salva. **A região permanece coberta; não existe visualização íntima nesta versão.**
 - Exploração em terceira pessoa com câmera por arraste, caminhada, corrida, pulo e controles de toque.
 - NPCs locais com conversa e movimentação simples, sem pessoas online nem jogadores simulados.

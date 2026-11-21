@@ -10,7 +10,9 @@ Base `makehuman/data/3dobjs/base.obj` e alvos adultos de morfologia do repositó
 
 O cabeçalho do OBJ declara explicitamente a liberação CC0 em setembro de 2020. `tools/prepare-human.mjs` seleciona a superfície `body`, converte unidades e orientação, combina alvos adultos e gera `public/assets/human/adult.glb`. Código do MakeHuman não é incorporado ao runtime: apenas os recursos gráficos CC0 e a saída derivada.
 
-O personagem usa materiais e movimento próprios do NEXUS. A roupa é apresentada como material de demonstração; a região íntima permanece coberta. O valor de preferência de pelos púbicos é persistido, mas não gera visualização íntima nesta entrega.
+O conjunto `male_casualsuit04` vem do [pacote de recursos de sistema MakeHuman CC0](https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html). O cabeçalho da malha credita Data Collection AB, Joel Palmius e Jonas Hauquier. `tools/prepare-avatar-clothes.mjs` usa a malha OBJ e o ajuste MHCLO para gerar as malhas de camiseta e calça e a máscara de pele em `public/assets/human/casual-outfit.glb`.
+
+O material da roupa é uma adaptação em tons de cinza a 1024 × 1024 de `male_casualsuit04_diffuse.png` do arquivo de versões do MakeHuman. A textura `public/assets/human/skin-detail.jpg` deriva de [`young_lightskinned_female_diffuse.png`](https://download.tuxfamily.org/makehuman/assets/1.2/base/skins/textures/young_lightskinned_female_diffuse.png), do mesmo conjunto de recursos, redimensionada e comprimida em JPEG. Cabelo, calçado, cores de roupa e movimento são do NEXUS. A região íntima permanece coberta.
 
 ## Poly Haven — CC0 1.0
 
