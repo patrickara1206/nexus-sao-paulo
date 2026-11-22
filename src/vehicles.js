@@ -1,6 +1,7 @@
 import * as T from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import {roadRecords, segmentDistance} from './geography.js';
+import {segmentDistance} from './geography.js';
+import {paulistaRoads} from './paulista-corridor.js';
 import {makeTrafficLight} from './lab.js';
 import {paulistaRoutes, paulistaCrossings, signalTarget, surfaceRoadWidth} from './street-layout.js';
 import {routeDistance, sampleRoute, signalPhase, stepDrive} from './transport-math.js';
@@ -11,8 +12,7 @@ const cellSize = 32;
 
 function driveableRoads() {
  const cells = new Map();
- for (const road of roadRecords) {
-  if (road.tunnel || road.layer < 0 || !road.points.some(([x, z]) => Math.hypot(x, z) < 550)) continue;
+ for (const road of paulistaRoads) {
   const radius = surfaceRoadWidth(road) / 2 - .4;
   for (let index = 1; index < road.points.length; index++) {
    const a = road.points[index - 1];

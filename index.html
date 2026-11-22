@@ -10,7 +10,7 @@
 <section id="intro">
  <div class="intro-top">
   <span class="logo">NEXUS <span>SÃO PAULO / SOLO</span></span>
-  <span class="version">VERSÃO 0.7 · EM DESENVOLVIMENTO</span>
+  <span class="version">VERSÃO 0.8 · EM DESENVOLVIMENTO</span>
  </div>
  <div class="intro-layout">
   <div class="intro-copy">
@@ -20,13 +20,14 @@
    </div>
    <div class="intro-start">
     <div class="city-note">
-     <strong id="cityConnectionTitle">Paulista, MASP e Trianon</strong>
-     <p id="cityConnectionText">Explore o trecho jogável da Paulista e seus arredores.</p>
+     <strong id="cityConnectionTitle">Paulista e Centro Histórico</strong>
+     <p id="cityConnectionText">Explore a Avenida Paulista e os principais pontos turísticos do Centro.</p>
      <button id="mapsSetup">Sobre o mapa ↗</button>
     </div>
     <div class="intro-actions">
      <button id="startStory" class="primary" disabled>Preparando personagem…</button>
      <button id="startFree" disabled>Explorar livremente</button>
+     <button id="startHistoric" disabled>Visitar o Centro Histórico</button>
     </div>
    </div>
   </div>
@@ -47,25 +48,32 @@
   </section>
  </div>
 </section>
-<dialog id="menuDialog"><div class="dialog-head"><h2>Sua vida na cidade</h2><button data-close="menuDialog" aria-label="Fechar menu">✕</button></div><button id="transportButton">Carro, metrô e túneis</button><button id="labButton">Laboratório de lojas e interiores</button><button id="customizeButton">Personalizar personagem</button><button id="modeButton">Alternar história / modo livre</button><button id="cameraButton" aria-pressed="false">Vista panorâmica</button><button id="recoverButton">Voltar ao ponto inicial</button><label>Qualidade<select id="quality"><option value="high">Alta · computador</option><option value="balanced">Equilibrada</option><option value="low">Leve · celular</option></select></label><p>Esta versão é exclusivamente solo. NPCs e progresso funcionam no navegador.</p><button id="cityInfoButton">Situação da cidade real</button></dialog>
+<dialog id="menuDialog"><div class="dialog-head"><h2>Sua vida na cidade</h2><button data-close="menuDialog" aria-label="Fechar menu">✕</button></div><button id="regionButton">Trocar de região</button><button id="transportButton">Carro, metrô e túneis</button><button id="labButton">Laboratório de lojas e interiores</button><button id="customizeButton">Personalizar personagem</button><button id="modeButton">Alternar história / modo livre</button><button id="cameraButton" aria-pressed="false">Vista panorâmica</button><button id="recoverButton">Voltar ao ponto inicial</button><label>Qualidade<select id="quality"><option value="high">Alta · computador</option><option value="balanced">Equilibrada</option><option value="low">Leve · celular</option></select></label><p>Esta versão é exclusivamente solo. NPCs e progresso funcionam no navegador.</p><button id="cityInfoButton">Situação da cidade real</button></dialog>
+<dialog id="regionDialog" aria-labelledby="regionTitle"><div class="dialog-head"><h2 id="regionTitle">Para onde vamos?</h2><button data-close="regionDialog" aria-label="Fechar regiões">✕</button></div>
+ <div class="region-choices">
+  <button id="travelPaulista"><strong>Avenida Paulista</strong><span>Comece no MASP e explore a avenida de ponta a ponta.</span></button>
+  <button id="travelHistoric"><strong>Centro Histórico</strong><span>Comece na Praça da Sé e descubra os pontos turísticos no mapa.</span></button>
+ </div>
+ <p id="travelStatus" role="status" hidden></p>
+</dialog>
 <dialog id="journalDialog"><div class="dialog-head"><div><small>HISTÓRIAS DE SÃO PAULO</small><h2>O que fazer hoje?</h2></div><button data-close="journalDialog" aria-label="Fechar histórias">✕</button></div><div id="missionList"></div></dialog>
 <dialog id="dialogue"><div class="dialog-head"><h2 id="dialogueTitle"></h2><button data-close="dialogue" aria-label="Fechar conversa">✕</button></div><p id="dialogueText"></p><div id="dialogueActions"></div></dialog>
 <dialog id="shopDialog"><div class="dialog-head"><div><small>GUARDA-ROUPA</small><h2>Seu estilo, suas escolhas.</h2></div><button data-close="shopDialog" aria-label="Fechar loja">✕</button></div><p id="shopBalance"></p><div id="clothingList"></div><p class="fine">Valores em moeda do jogo. Nenhuma compra usa dinheiro real.</p></dialog>
 <dialog id="mapDialog">
  <div class="dialog-head"><div><small>MAPA DE SÃO PAULO</small><h2 id="mapStreet">Rua atual do personagem</h2></div><button data-close="mapDialog" aria-label="Fechar mapa">✕</button></div>
- <div class="map-tools"><button id="mapLocal" aria-pressed="true">Trecho jogável</button><button id="mapRegion" aria-pressed="false">Visão geral</button><button id="clearDestination" disabled>Limpar destino</button></div>
+ <div class="map-tools"><button id="mapLocal" aria-pressed="true">Área atual</button><button id="mapRegion" aria-pressed="false">Visão geral</button><button id="mapTravel">Trocar de região</button></div>
  <p id="mapDestination" role="status">Selecione um ponto para marcar o destino.</p>
  <div class="atlas">
-  <canvas id="atlas" width="900" height="640" aria-label="Mapa das ruas e do trecho reconstruído de São Paulo"></canvas>
+  <canvas id="atlas" width="900" height="640" aria-label="Mapa das ruas e áreas jogáveis de São Paulo"></canvas>
   <div class="map-places">
-   <h3>Visite na Paulista</h3><div id="localPlaces"></div>
+   <h3 id="localPlacesTitle">Pontos turísticos</h3><div id="localPlaces"></div>
    <div id="mapReference" hidden>
-    <h3>Centro Histórico</h3><p>Pontos de referência fora do trecho jogável.</p><div id="historicPlaces" class="map-reference-list"></div>
     <h3>Outros pontos de referência</h3><div id="otherPlaces" class="map-reference-list"></div>
    </div>
-   <p class="fine"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors · ODbL</a></p>
+   <p class="fine"><a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors · ODbL</a><br><a id="terrainCredit" hidden href="https://www.mapzen.com/rights/#mapzen-terrain-tiles" target="_blank" rel="noopener">Relevo: Mapzen, USGS e NASA SRTM</a></p>
   </div>
  </div>
+ <div class="map-tools map-actions"><button id="visitDestination" class="primary" disabled>Ir até o destino</button><button id="clearDestination" disabled>Limpar destino</button></div>
 </dialog>
-<dialog id="cityDialog"><div class="dialog-head"><h2>São Paulo real</h2><button data-close="cityDialog" aria-label="Fechar situação da cidade">✕</button></div><p id="cityDetails">O primeiro trecho usa caminhos do Trianon, o contorno do MASP e do Paulista Corporate, além dos traçados dos túneis Nove de Julho. A estação Trianon–Masp segue a descrição pública de plataforma central e dois mezaninos. Seção dos túneis, trens, cotas e acessos são aproximações; não há viagem entre estações. O edifício foi reconstruído por referências, com materiais aproximados; a fidelidade de cada detalhe ainda não foi validada. O Paulista Corporate tem uma reconstrução específica por referência. Outros prédios vizinhos e as demais regiões continuam incompletos.</p><p><a href="https://www.openstreetmap.org/way/1370081491" target="_blank" rel="noopener">Contorno e dimensões do MASP</a> · <a href="https://www.openstreetmap.org/relation/7398292" target="_blank" rel="noopener">Perímetro do Trianon</a> · <a href="https://commons.wikimedia.org/wiki/File:MASP_Brazil.jpg" target="_blank" rel="noopener">Referência visual de Wilfredor · CC0</a></p><p>A integração preparada usa Google Maps Photorealistic 3D Tiles por transmissão, com atribuição visível. Ela exige um projeto próprio, API habilitada e chave restrita ao domínio do jogo. O provedor pode cobrar pelo uso.</p><p>Não ativamos faturamento nem criamos uma chave sem sua decisão. A cobertura, a resolução ao nível da rua e os interiores precisam ser verificados separadamente. Fotogrametria não fornece automaticamente interiores acessíveis ou tráfego dinâmico.</p><a href="https://developers.google.com/maps/documentation/tile/get-api-key" target="_blank" rel="noopener">Configuração oficial do provedor ↗</a></dialog>
+<dialog id="cityDialog"><div class="dialog-head"><h2>Fontes do mapa</h2><button data-close="cityDialog" aria-label="Fechar situação da cidade">✕</button></div><p id="cityDetails">A Paulista segue o traçado completo do OpenStreetMap. O Centro Histórico combina ruas, praças e edifícios mapeados com dados de relevo. Alguns pontos turísticos têm exteriores modelados por referências. Os demais volumes seguem o contorno e a altura disponível, com acabamentos e detalhes em desenvolvimento.</p><p><a href="https://www.openstreetmap.org/way/1370081491" target="_blank" rel="noopener">Contorno e dimensões do MASP</a> · <a href="https://www.openstreetmap.org/relation/7398292" target="_blank" rel="noopener">Perímetro do Trianon</a> · <a href="https://prefeitura.sp.gov.br/w/servico/arquitetura-no-centro-historico" target="_blank" rel="noopener">Roteiro de arquitetura do Centro</a></p><p>A integração preparada usa Google Maps Photorealistic 3D Tiles por transmissão, com atribuição visível. Ela exige um projeto próprio, API habilitada e chave restrita ao domínio do jogo. O provedor pode cobrar pelo uso.</p><p>Não ativamos faturamento nem criamos uma chave sem sua decisão. A cobertura, a resolução ao nível da rua e os interiores precisam ser verificados separadamente. Fotogrametria não fornece automaticamente interiores acessíveis ou tráfego dinâmico.</p><a href="https://developers.google.com/maps/documentation/tile/get-api-key" target="_blank" rel="noopener">Configuração oficial do provedor ↗</a></dialog>
 <script type="module" src="/src/solo-main.js"></script></body></html>

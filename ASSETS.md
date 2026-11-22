@@ -35,6 +35,10 @@ As origens e metadados foram consultados pela API oficial `https://api.polyhaven
 
 ## OpenStreetMap — ODbL 1.0
 
+A vegetação da versão 0.8 usa `tree-bark.glb` e `tree-crown.png`, derivados do [Tree Small 02 da Poly Haven](https://polyhaven.com/a/tree_small_02), CC0. Os galhos texturizados e as copas instanciadas são distribuídos em células para reduzir o custo de renderização. Posições mapeadas são complementadas por vegetação indicativa. A [descrição municipal do Trianon](https://www2.prefeitura.sp.gov.br/web/meio_ambiente/w/parques/regiao_centrooeste/5773) identifica sua vegetação de Mata Atlântica. O céu diurno é um shader original.
+
+As palmeiras imperiais da Praça da Sé usam geometria original e posições aproximadas, baseadas na [descrição municipal da vegetação da praça](https://prefeitura.sp.gov.br/web/se/w/noticias/15982).
+
 Ruas e banco derivado de contornos: https://www.openstreetmap.org/copyright. Consulte `DATA-LICENSE.md`.
 
 ## Google Maps 3D — integração preparada, conteúdo ausente
@@ -48,6 +52,12 @@ Os decodificadores Draco são distribuídos a partir de `three/examples/jsm/libs
 ## Reconstrução do MASP e Trianon
 
 Contorno e dimensões: https://www.openstreetmap.org/way/1370081491. Parque: https://www.openstreetmap.org/relation/7398292. Referência fotográfica CC0 de Wilfredor: https://commons.wikimedia.org/wiki/File:MASP_Brazil.jpg (consulta visual; imagem não incorporada). Descrição arquitetônica da Câmara Municipal: https://www.saopaulo.sp.leg.br/iah/fulltext/projeto/PL0098-1992.pdf. Materiais e detalhes são reconstruções sujeitas a revisão, não uma captura fotogramétrica.
+
+## Centro Histórico e expansão da Paulista
+
+As referências arquitetônicas principais incluem as [dimensões da Catedral da Sé registradas pela ALESP](https://www.al.sp.gov.br/noticia/?id=266280), o [roteiro arquitetônico da Prefeitura](https://prefeitura.sp.gov.br/w/servico/arquitetura-no-centro-historico) e os contornos/traçados do OpenStreetMap. Os exteriores do Theatro, Pateo, Farol, Copan, Martinelli e Viaduto do Chá são malhas originais feitas por referência. A geometria mantida para demais imóveis representa volume e implantação. O piso de praças foi nivelado em função de distorções da elevação por radar.
+
+Os modelos da [Casa das Rosas](https://casadasrosas.org.br/museu/sobre/), da [Japan House](https://japanhousesp.com.br/novidade/madeira-washi-e-concreto-a-receita-do-arquiteto-kengo-kuma-para-a-japan-house-sao-paulo/), do [IMS Paulista](https://ims.com.br/acessibilidade/informacoes-ims-paulista/) e do [Edifício Pietro Maria Bardi](https://metroarquitetos.com.br/projeto/masp-em-expansao-edificio-pietro-maria-bardi/) usam referências visuais, contornos e medidas disponíveis. Não contêm imagens de fachada redistribuídas.
 
 ## Carro e otimização
 

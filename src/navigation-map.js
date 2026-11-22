@@ -119,11 +119,12 @@ function drawScale(ctx, width, height, scale, isMini, unit) {
 
 const overviewLabels = new Set(['masp', 'republica', 'luz', 'ibira', 'se', 'casa']);
 
-export function drawNavigationMap(canvas, {position, yaw, waypoint, destinations = [], coverage, mode = 'mini', space = 'world'}) {
+export function drawNavigationMap(canvas, {position, yaw, waypoint, destinations = [], coverage, coverages, mode = 'mini', space = 'world'}) {
   const ctx = canvas.getContext('2d');
   if (!ctx || !position) return;
   const {width, height} = canvas;
   const isMini = mode === 'mini';
+  const regions = mode === 'atlas' ? coverages ?? (coverage ? [coverage] : []) : coverage ? [coverage] : [];
   const clientScale = Math.min((canvas.clientWidth || width) / width, (canvas.clientHeight || height) / height);
   const unit = Math.min(2.9, Math.max(1, 1 / clientScale));
   const {scale, centerX, centerZ} = getView(width, height, mode, position, coverage);
@@ -141,10 +142,12 @@ export function drawNavigationMap(canvas, {position, yaw, waypoint, destinations
   ctx.lineJoin = 'round';
   ctx.lineCap = 'round';
 
-  if (coverage && !isMini) {
-    const [x, y] = project(coverage.minX, coverage.minZ);
+  if (!isMini) {
     ctx.fillStyle = '#1d393b';
-    ctx.fillRect(x, y, (coverage.maxX - coverage.minX) * scale, (coverage.maxZ - coverage.minZ) * scale);
+    for (const region of regions) {
+      const [x, y] = project(region.minX, region.minZ);
+      ctx.fillRect(x, y, (region.maxX - region.minX) * scale, (region.maxZ - region.minZ) * scale);
+    }
   }
 
   ctx.fillStyle = palette.park;
@@ -170,12 +173,12 @@ export function drawNavigationMap(canvas, {position, yaw, waypoint, destinations
     ctx.setLineDash([]);
   }
 
-  if (coverage) {
-    const [x, y] = project(coverage.minX, coverage.minZ);
+  for (const region of regions) {
+    const [x, y] = project(region.minX, region.minZ);
     ctx.strokeStyle = palette.coverage;
     ctx.lineWidth = isMini ? 1.15 : 1.5 * unit;
     ctx.setLineDash([5 * unit, 4 * unit]);
-    ctx.strokeRect(x, y, (coverage.maxX - coverage.minX) * scale, (coverage.maxZ - coverage.minZ) * scale);
+    ctx.strokeRect(x, y, (region.maxX - region.minX) * scale, (region.maxZ - region.minZ) * scale);
     ctx.setLineDash([]);
   }
 
@@ -221,7 +224,7 @@ export function drawNavigationMap(canvas, {position, yaw, waypoint, destinations
   for (const destination of destinations) {
     if (!mapIncludes(visibleBounds, destination)) continue;
     const [x, y] = project(destination.x, destination.z);
-    const playable = mapIncludes(coverage, destination);
+    const playable = destination.playable ?? mapIncludes(coverage, destination);
     const color = playable ? palette.marker : palette.muted;
     drawDiamond(ctx, x, y, (isMini ? 3 : 4) * unit, color, playable);
     if (mode === 'local' || (mode === 'atlas' && overviewLabels.has(destination.id))) label(destination.mapName || destination.name, x, y, color);
@@ -254,7 +257,7 @@ export function drawNavigationMap(canvas, {position, yaw, waypoint, destinations
   drawArrow(ctx, 27 * unit, 17 * unit, 0, 5.5 * unit, palette.ink);
   drawScale(ctx, width, height, scale, isMini, unit);
 
-  if (!isMini && coverage) {
+  if (!isMini && regions.length) {
     ctx.font = `600 ${12 * unit}px system-ui`;
     ctx.lineWidth = 5 * unit;
     ctx.strokeStyle = palette.background;

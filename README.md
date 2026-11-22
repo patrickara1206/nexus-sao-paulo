@@ -1,8 +1,14 @@
 # NEXUS — São Paulo / Solo
 
-**Versão 0.7 — personagem e personalização revisados. O trecho jogável continua concentrado no entorno do MASP/Trianon.**
+**Versão 0.8 — Avenida Paulista de ponta a ponta, Centro Histórico explorável e céu e árvores revistos.**
 
 O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e personalização, com prioridade para fachadas e lugares reais. A maquete com fachadas procedurais da versão 0.1 foi retirada da experiência principal. O histórico Git conserva a versão anterior.
+
+## Exploração na versão 0.8
+
+- **Visitar o Centro Histórico** começa na Praça da Sé. Use **M** ou o minimapa para escolher um ponto, marcar a direção ou selecionar **Ir até o destino**. Para voltar à Avenida Paulista, use **Trocar de região**.
+- A Avenida Paulista pode ser percorrida entre os dois extremos mapeados, com saídas pelas transversais próximas. O Centro usa o relevo dos dados Mapzen Terrain Tiles, vias, praças e contornos edificados derivados do OpenStreetMap. As duas regiões usam a mesma referência geográfica e a troca entre elas é por transição.
+- A cena diurna tem azul de céu, nuvens e iluminação solar. O Parque Trianon ganhou copas densas com textura de folhas, mantendo os exemplares mapeados e o preenchimento indicativo.
 
 ## Personagem na versão 0.7
 
@@ -38,15 +44,14 @@ O projeto mudou de direção: jogo solo com NPCs, histórias, modo livre e perso
 
 Fontes: `src/transport-source.json`, `src/neighbors-source.json`, ASSETS.md. A versão nativa foi pausada a pedido do usuário; o produto principal continua Web.
 
-## Trecho reconstruído nesta atualização
+## Entorno do MASP e do Trianon
 
-O jogo inicia no entorno do MASP, em uma reconstrução parcial, e permite caminhar até o perímetro/caminhos do Trianon. O laboratório de lojas e interiores permanece separado, no menu.
+O início da história fica no entorno do MASP. Os caminhos do Trianon se conectam à Avenida Paulista. O laboratório de lojas e interiores está no menu.
 
 - MASP: contorno do OSM way 1370081491; envoltória de aproximadamente 77,8 × 30 m, altura mapeada de 24,75 m e vão inferior de 8,4 m. Pilares, vigas e caixilharia foram modelados por referências. Não é um escaneamento nem um levantamento arquitetônico completo.
 - Trianon: polígonos da relação OSM 7398292, caminhos públicos presentes na resposta do mapa e entrada no nó 2081876330. Árvores com posições mapeadas são complementadas por vegetação indicativa; espécies e densidade não são levantamento fiel.
 - Vias superficiais próximas são renderizadas pelo traçado do OSM. Túneis são excluídos da superfície e da identificação de rua atual. Larguras, materiais e cotas ainda são aproximações.
-- O Paulista Corporate é o primeiro prédio vizinho reconstruído por referência. As outras lacunas permanecem visíveis. O edifício Pietro Maria Bardi e o desnível para a Nove de Julho ainda não foram reconstruídos.
-- Reconstrução limita-se ao trecho: os destinos do Centro Histórico continuam no atlas para orientar a expansão, sem serem declarados prontos.
+- O Paulista Corporate é uma reconstrução por referência. A cota da Paulista e o desnível para a Nove de Julho ainda exigem levantamento.
 
 Fontes e limitações estão em `src/masp-source.json`, `src/trianon.json` e `src/paulista-landscape.json`.
 
@@ -69,9 +74,7 @@ Fontes e limitações estão em `src/masp-source.json`, `src/trianon.json` e `sr
 
 A integração de transmissão de Google Maps Photorealistic 3D Tiles está implementada em `src/photoreal-city.js`, com georreferenciamento WGS84, decodificador Draco e atribuições de fonte. **Não foi ativada nem validada com a cidade real por falta de configuração autorizada do provedor.**
 
-Sem uma chave configurada, o jogo não faz chamadas ao serviço de mapas 3D e abre o trecho parcial reconstruído com fontes abertas; o laboratório de mecânicas fica no menu. Não substitui fachadas faltantes por edifícios inventados.
-
-O Centro Histórico está no escopo completo. O atlas já referencia Sé, Pátio do Colégio, São Bento, Anhangabaú, Theatro Municipal, República, Copan, Itália, Martinelli, Biblioteca Mário de Andrade, Luz e Pinacoteca. Essa lista **não prova que cada prédio, fachada, parque, rua ou interior foi reconstruído**. A cobertura e a resolução precisam ser inspecionadas com a fonte conectada.
+Sem uma chave configurada, o jogo abre as regiões reconstruídas com fontes abertas. Modelos de marcos arquitetônicos partem de referências. Os demais edifícios mapeados aparecem com contorno e volume, com altura de cadastro quando disponível. Fachadas de cada imóvel, vegetação por exemplar, mobiliário urbano e interiores acessíveis permanecem parciais.
 
 Fotogrametria é uma captura datada: não garante fachadas atuais, qualidade de perto, objetos separados, tráfego, colisões perfeitas ou interiores acessíveis. Esses itens exigem trabalho e validação adicionais. Os interiores de gameplay continuam separados dos imóveis reais até existir levantamento autorizado de cada um.
 
@@ -86,7 +89,7 @@ pnpm build
 pnpm dev
 ```
 
-O Vite permite testar o personagem e o laboratório. Para testar o Worker e `/api/config`, use `pnpm dev:online` após o build.
+O Vite permite testar as regiões, o personagem e o laboratório. Para testar o Worker e `/api/config`, use `pnpm dev:online` após o build.
 
 WASD/setas para mover; Shift para correr; Espaço para pular; arraste para olhar; E para conversar/interagir; J para histórias; M para mapa; C para câmera panorâmica. Os pontos de serviço do laboratório ficam próximos ao início. O botão “Ir ao objetivo · teste” é exclusivo do laboratório e facilita validar os fluxos; não aparece no modo conectado à cidade real.
 
@@ -112,7 +115,7 @@ Não são feitos downloads em massa nem exportação de conteúdo Google. A base
 
 ## Dados e licenças
 
-Ruas e banco de contornos derivados do OpenStreetMap: © OpenStreetMap contributors, ODbL 1.0. O banco de 71.985 contornos, em 166 setores, continua no repositório como insumo de geografia/validação; **não é renderizado com fachadas genéricas no jogo atual**. Consulte `DATA-LICENSE.md`.
+Ruas e banco de contornos derivados do OpenStreetMap: © OpenStreetMap contributors, ODbL 1.0. O jogo seleciona os contornos do Centro e das imediações da Paulista para exibir volumes. Consulte `DATA-LICENSE.md`.
 
 Modelos humanos, materiais PBR e objetos: consulte `ASSETS.md`. As ferramentas em `tools/` documentam as transformações. Modelos de museus, marcas e clubes não são declarados oficiais; os dioramas regionais inventados da versão 0.1 não fazem parte da experiência principal atual.
 
