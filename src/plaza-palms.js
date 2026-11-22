@@ -3,7 +3,7 @@ import * as T from 'three';
 // The imperial palms are documented at Praça da Sé. These are approximate
 // plantings along the plaza axis, not a surveyed inventory.
 export const sePalmLocations = [
- [2221,-1215,15.4], [2231,-1236,17.7], [2241,-1257,16.3], [2251,-1279,18.1], [2262,-1302,16.8],
+ [2221,-1215,15.4], [2231,-1236,17.7], [2241,-1257,16.3], [2251,-1279,18.1], [2257,-1301,16.8],
  [2249,-1214,17.8], [2259,-1236,16.7], [2269,-1257,18.4], [2279,-1279,16.1], [2289,-1302,17.4],
 ];
 
