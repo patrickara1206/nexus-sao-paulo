@@ -1,5 +1,6 @@
 import * as T from 'three';import './solo.css';
 import {createSaoPauloSky} from './sky.js';
+import {cityTime, createLightingAndPostFX} from './LightingAndPostFX.js';
 import {createHuman,characterStudio,loadHuman} from './human.js';
 import {normalizeState,buyClothing,buyMeal,advanceMission,missions,clothing} from './game-state.js';
 import {createLab,makeInteriors,makeTrafficLight} from './lab.js';
@@ -14,13 +15,14 @@ import {drawNavigationMap,mapIncludes,navigationInfo} from './navigation-map.js'
 const $=id=>document.getElementById(id),canvas=$('world'),storageKey='nexus-solo-v2';let raw;try{raw=JSON.parse(localStorage.getItem(storageKey)||'null');}catch{}
 const state=normalizeState(raw),player={x:0,z:-65,y:12},clock=new T.Clock(),keys=new Set(),stick={x:0,y:0};let area='paulista',driving=false;let running=false,space='world',lastWorld={x:0,z:-65,y:12},yaw=Math.PI,pitch=.13,speed=0,jump=0,jumpV=0,time=0,lastUI=0,lastGround=0,groundTarget=12,photo=false,nearestInteraction,toastTimer,studio,avatar,city={enabled:false},waypoint=null;
 let mapMode='local',cameraZoom=1,driveOrbit=0,jumpRequested=false;
-let historicArea,historicRequest,changingRegion=false;
+let historicArea,historicTraffic,historicCrowd,historicRequest,changingRegion=false;
 let renderer;try{renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});}catch{$('cityConnectionText').textContent='WebGL 2 indisponível. Ative a aceleração gráfica do navegador.';throw new Error('WebGL 2 unavailable');}
 renderer.outputColorSpace=T.SRGBColorSpace;renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;
 const scene=new T.Scene();scene.background=new T.Color('#c8dde9');scene.fog=new T.FogExp2('#c8dde9',.00058);
 const sky=createSaoPauloSky();scene.add(sky);
 const camera=new T.PerspectiveCamera(52,1,.05,18000);camera.position.set(0,15,-74);const hemi=new T.HemisphereLight('#d9e9ff','#727869',1.05);scene.add(hemi);const sun=new T.DirectionalLight('#fff1d9',2.1);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-70,right:70,top:70,bottom:-70,near:1,far:700});sun.shadow.bias=-.00015;sun.shadow.normalBias=.035;scene.add(sun,sun.target);
 const pmrem=new T.PMREMGenerator(renderer),reflectionScene=new T.Scene();reflectionScene.add(sky.clone());scene.environment=pmrem.fromScene(reflectionScene,.03,.1,20000).texture;scene.environmentIntensity=.6;pmrem.dispose();
+const lighting=createLightingAndPostFX(renderer,scene,camera,{sky,sun,hemi});
 const paulista=createPaulista(scene),lab=createLab(scene),interiors=makeInteriors(scene),traffic=[makeTrafficLight(lab.root,-35,-60),makeTrafficLight(lab.root,35,-10)];lab.root.visible=false;Object.assign(player,paulistaSpawn);groundTarget=12;yaw=paulistaHeading;const actors=new T.Group();scene.add(actors);const npcs=[];
 const vehicles=createVehicles(paulista.root,paulistaSpawn),metro=createMetro(scene),tunnels=createTunnels(scene);interiors.set('metro',metro.root);interiors.set('tunnel',tunnels.root);addMetroEntrances(paulista.root);addTunnelPortals(paulista.root,tunnels);
 const trianon=trianonEntrance;
@@ -48,8 +50,20 @@ function showWorld(visible){
 }
 function loadHistoric(){
  if(historicArea)return Promise.resolve(historicArea);
- return historicRequest??=import('./historic.js').then(async ({createHistoric})=>{
-  historicArea=await createHistoric(scene);
+ return historicRequest??=Promise.all([import('./historic.js'),import('./TrafficAndHeadlights.js'),import('./CrowdAndPlayer.js')]).then(async ([map,mobility,people])=>{
+  const region=await map.createHistoric(scene);
+  try{
+   historicTraffic=mobility.createHistoricTraffic(region.root,region.geo.links,region.groundHeight,{
+    features:region.geo.features,signals:region.geo.features.filter(feature=>feature.kind==='signal'),renderer,
+   });
+   region.props?.setSignals(historicTraffic.signals);
+   historicCrowd=people.createHistoricCrowd(region.root,region,historicTraffic);
+  }catch(error){
+   historicTraffic?.dispose();
+   region.root.removeFromParent();
+   throw error;
+  }
+  historicArea=region;
   historicArea.root.visible=false;
   for(const point of historicArea.pois)playableDestinations.push({...point,area:'historic',playable:true});
   return historicArea;
@@ -90,7 +104,7 @@ function updateUI(){
  $('street').textContent=indoorName||streetName;
  $('mapStreet').textContent=underground?indoorName+' · subterrâneo':'Rua atual · '+streetName;
  $('district').textContent=underground?'Dimensões verticais aproximadas':indoorName?'Interior de testes':city.enabled?nearestPlace(player.x,player.z).name+' · São Paulo':surfaceName()+' · São Paulo';
- $('clock').textContent=`${String(14+Math.floor(time/240)%10).padStart(2,'0')}:${String(Math.floor(time/4)%60).padStart(2,'0')}`;
+ $('clock').textContent=cityTime(time);
  if(!state.freeMode&&task?.kind==='visit'&&space==='world'&&area!=='historic'){
   const target=targetPosition(task.target);
   if(target&&(city.enabled||area!=='paulista'||inSlice(target.x,target.z))&&Math.hypot(player.x-target.x,player.z-target.z)<12){
@@ -149,7 +163,18 @@ function start(free){
 }
 $('startStory').onclick=()=>{if(area==='historic')switchArea('paulista');start(false);};$('startFree').onclick=()=>start(true);$('pauseButton').onclick=()=>openDialog('menuDialog');$('journalButton').onclick=showJournal;$('customizeButton').onclick=customize;$('modeButton').onclick=()=>{state.freeMode=!state.freeMode;save();updateUI();$('menuDialog').close();};$('recoverButton').onclick=()=>{if(space!=='world')leaveSpace();switchArea(area);$('menuDialog').close();};$('mapsSetup').onclick=$('cityInfoButton').onclick=()=>openDialog('cityDialog');$('touchInteract').onclick=interact;$('touchJump').onpointerdown=e=>{if(isPaused())return;e.target.setPointerCapture(e.pointerId);if(driving)keys.add('Space');else jumpRequested=true;};$('touchJump').onpointerup=$('touchJump').onpointercancel=()=>keys.delete('Space');
 $('characterForm').oninput=e=>{const el=e.target;if(!el.name)return;state.appearance[el.name]=['body','build','height','bodyHair'].includes(el.name)?Number(el.value):el.value;applyAppearance();save();};for(const b of document.querySelectorAll('[data-tab]'))b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('[data-section]').forEach(x=>x.hidden=x.dataset.section!==b.dataset.tab);};
-function quality(){const low=$('quality').value==='low',balanced=$('quality').value==='balanced';renderer.setPixelRatio(Math.min(devicePixelRatio,low?1:balanced?1.3:1.75));renderer.shadowMap.enabled=!low;renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}if(matchMedia('(pointer:coarse)').matches||innerWidth<700)$('quality').value='low';else $('quality').value='balanced';$('quality').onchange=quality;addEventListener('resize',quality);quality();
+function quality(){lighting.setQuality($('quality').value,innerWidth,innerHeight,devicePixelRatio);}
+let selectedQuality=matchMedia('(pointer:coarse)').matches||innerWidth<700?'low':'balanced';
+try{selectedQuality=localStorage.getItem('nexus-graphics')||selectedQuality;}catch{}
+if(!['low','balanced','high'].includes(selectedQuality))selectedQuality='balanced';
+$('quality').value=selectedQuality;
+$('quality').onchange=()=>{
+ try{localStorage.setItem('nexus-graphics',$('quality').value);}catch{}
+ quality();
+ $('quality').blur();
+};
+addEventListener('resize',quality);
+quality();
 function getInput(){let f=(keys.has('KeyW')||keys.has('ArrowUp')?1:0)-(keys.has('KeyS')||keys.has('ArrowDown')?1:0)+stick.y,s=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+stick.x;const l=Math.max(1,Math.hypot(f,s));return {forward:f/l,side:s/l};}
 function setPanorama(value){
  photo=value&&space==='world';
@@ -458,8 +483,6 @@ function updateCamera(dt){
  const t=1-Math.exp(-dt*(driving?6:9));
  camera.position.lerp(cameraDesired,t);
  camera.lookAt(cameraTarget);
- sun.position.set(player.x-170,player.y+120,player.z-80);
- sun.target.position.set(player.x,player.y,player.z);
 }
 function updatePedestrians(dt){
  for(let i=0;i<npcs.length;i++){
@@ -476,11 +499,16 @@ function updatePedestrians(dt){
   npc.human.root.position.set(npc.x,level,npc.z);
  }
 }
+let frameSum=0,frameCount=0,reportedFps=0;
 function frame(){
  requestAnimationFrame(frame);
  const frameSeconds=clock.getDelta(),dt=Math.min(frameSeconds,.05);
  const active=!isPaused();
- if(active)time+=dt;
+ if(active){
+  time+=dt;
+  frameSum+=frameSeconds;frameCount++;
+  if(frameSum>=1){reportedFps=Math.round(frameCount/frameSum);frameSum=frameCount=0;}
+ }else{frameSum=frameCount=0;}
  if(avatar){
   if(active)move(dt);
   else avatar.animate(time,0);
@@ -492,6 +520,13 @@ function frame(){
   $('tileCredits').textContent=city.credits();
  }
  traffic.forEach(light=>light.update(time));
+ lighting.update(time,player,space==='world');
+ if(historicArea?.root.visible){
+  const q=$('quality').value;
+  historicCrowd.update(active?dt:0,{player,quality:q,time});
+  historicTraffic.update(dt,{active,player,quality:q,time,daylight:lighting.daylight,obstacles:historicCrowd.crossers});
+  historicArea.updateDetail(player,q,lighting.daylight,time);
+ }
  vehicles.update(dt,{active:active&&space==='world'&&area==='paulista'&&!city.enabled,obstacles:[...npcs,...(!driving?[player]:[])],driving});
  metro.update(dt,active&&space==='metro');
  if(space==='tunnel')tunnels.update(player);
@@ -503,18 +538,14 @@ function frame(){
   drawMap($('minimap'));
   canvas.dataset.state=JSON.stringify({
    x:Math.round(player.x*100)/100,z:Math.round(player.z*100)/100,space,money:state.money,
-   solo:true,photorealistic:city.enabled,area,fps:Math.round(1/frameSeconds),drawCalls:renderer.info.render.calls,
-   driving,vehicleReady:!!vehicles.own.model,traffic:vehicles.cars.length,
+   solo:true,photorealistic:city.enabled,area,fps:reportedFps,drawCalls:renderer.info.render.calls,quality:$('quality').value,
+   driving,vehicleReady:!!vehicles.own.model,traffic:area==='historic'?historicTraffic?.vehicles?.length??0:vehicles.cars.length,
+   crowd:area==='historic'?historicCrowd?.count??0:0,
    vehicleSpeed:Math.round(vehicles.own.speed*3.6),trainPhase:metro.motion.phase,npcs:npcs.length,
    mission:state.activeMission,step:state.missions[state.activeMission]?.step||0,
   });
  }
- sun.visible=space==='world';
- hemi.intensity=space==='world'?1.05:.22;
- scene.environmentIntensity=space==='world'?.6:.18;
- sky.visible=space==='world';
- sky.position.copy(camera.position);
- renderer.render(scene,camera);
+ lighting.render(dt,space==='world');
 }
 fillForm();frame();
 

@@ -127,3 +127,14 @@ Modelos humanos, materiais PBR e objetos: consulte `ASSETS.md`. As ferramentas e
 4. Evoluir rig, cabelo, pele, roupas e animações, além de comportamento de pedestres e veículos.
 5. Transferir e revisar as histórias do laboratório para os locais reais, com circulação e interações validadas.
 6. Expandir ABC, Serra do Mar e Baixada por áreas, mantendo o mesmo critério de fontes reais e inspeção. Vila Belmiro exige geometria e acesso próprios, não um estádio genérico com o nome trocado.
+
+## Corredor da Avenida Prestes Maia
+
+No menu de regiões, selecione **Avenida Prestes Maia**. A distância no eixo horizontal é expressa em metros. O recorte OpenStreetMap é carregado de um arquivo local e já inclui os dados necessários para iniciar a partida.
+
+- **VehicleFleetManager.js** reúne 22 categorias com dimensões em metros, rodas animadas, lataria PBR e sinalização luminosa. Para trocar uma carroceria por um GLB, passe `fleetOptions: {assets: {sedan: {url: '/assets/vehicles/meu-seda.glb', yaw: 0}}}` na criação do trânsito. O modelo admite Draco e KTX2. Use o eixo +Z para a frente e nomeie as peças das rodas para a substituição pelos eixos animados.
+- **TrafficAndHeadlights.js** usa o grafo do OpenStreetMap para selecionar o sentido e as faixas por categoria. Compartilha a fase dos semáforos com o mobiliário e a decisão de travessia com a multidão. O ciclo dos semáforos e os letreiros de ônibus são simulados.
+- **GeoMapBuilder.js** projeta latitude e longitude de WGS84 e combina o recorte com o mapa anterior. Largura e altura registram a origem da medida. Um pavimento estimado usa 3,2 m.
+- **UrbanPropsAndTransit.js**, **CrowdAndPlayer.js** e **LightingAndPostFX.js** gerenciam mobiliário do corredor, pedestres e qualidade da renderização.
+
+Os modelos da frota incluídos são procedurais e representam categorias brasileiras. As fachadas secundárias são reconstituições procedurais. O trecho inclui acessos visuais de metrô, com cotas e detalhes arquitetônicos aproximados conforme a disponibilidade do mapa. Dados © colaboradores do OpenStreetMap, sob ODbL (https://www.openstreetmap.org/copyright).

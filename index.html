@@ -1,11 +1,11 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#121619"><title>NEXUS · São Paulo | Solo</title><meta name="description" content="NEXUS: desenvolvimento de um mundo aberto solo em São Paulo, com NPCs, histórias e personalização."></head><body>
 <canvas id="world" aria-label="Cenário 3D do jogo"></canvas>
-<div id="hud"><header><a class="logo" href="./">NEXUS <span>SÃO PAULO / SOLO</span></a><div class="hud-stats"><span id="money">R$ 300</span><span id="health">Saúde 85</span><button id="pauseButton" aria-label="Abrir menu">☰</button></div></header>
+<div id="hud"><header><a class="logo" href="./">NEXUS <span>SÃO PAULO / SOLO</span></a><div class="hud-stats"><span id="money">R$ 300</span><span id="health">Saúde 85</span><label class="graphics-selector"><span>Gráficos</span><select id="quality" aria-label="Qualidade gráfica"><option value="low">Baixo</option><option value="balanced">Médio</option><option value="high">Ultra</option></select></label><button id="pauseButton" aria-label="Abrir menu">☰</button></div></header>
 <div id="address"><small id="streetCaption">RUA ATUAL DO PERSONAGEM</small><strong id="street">Avenida Paulista</strong><span id="district">Bela Vista · São Paulo</span></div>
 <aside id="quest"><small id="questCaption">HISTÓRIA / PRIMEIROS PASSOS</small><h2 id="questTitle">Primeiros passos na Paulista</h2><p id="questTask">Converse com Marina.</p><button id="journalButton">Ver histórias <kbd>J</kbd></button><button id="testTravel" hidden>Ir ao objetivo · teste</button></aside>
 <div id="cityStatus" class="city-status"></div><div id="toast" role="status" aria-live="polite"></div><div id="interactionPrompt" hidden></div>
 <div id="navIndicator" hidden><span id="navArrow" aria-hidden="true">↑</span><div><strong id="navName"></strong><span id="navDistance"></span></div></div>
-<div class="bottom"><div class="minimap-wrap"><button id="mapButton" class="minimap-card"><canvas id="minimap" width="220" height="175" aria-label="Minimapa e posição do personagem"></canvas><span>ABRIR MAPA <kbd>M</kbd></span></button><a class="osm-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></div><div class="hints"><kbd>WASD</kbd> mover <kbd>Shift</kbd> correr <kbd>Espaço</kbd> pular <kbd>E</kbd> interagir <kbd>C</kbd> câmera</div><div class="time"><strong id="clock">14:30</strong><span id="gameMode">HISTÓRIA SOLO</span></div></div><div id="mapCredits" hidden><b>Google Maps</b><span id="tileCredits"></span><small>Personagens e objetos de gameplay: NEXUS</small></div>
+<div class="bottom"><div class="minimap-wrap"><button id="mapButton" class="minimap-card"><canvas id="minimap" width="220" height="175" aria-label="Minimapa e posição do personagem"></canvas><span>ABRIR MAPA <kbd>M</kbd></span></button><a class="osm-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></div><div class="hints"><kbd>WASD</kbd> mover <kbd>Shift</kbd> correr <kbd>Espaço</kbd> pular <kbd>E</kbd> interagir <kbd>C</kbd> câmera</div><div class="time"><strong id="clock">16:45</strong><span id="gameMode">HISTÓRIA SOLO</span></div></div><div id="mapCredits" hidden><b>Google Maps</b><span id="tileCredits"></span><small>Personagens e objetos de gameplay: NEXUS</small></div>
 <div id="touch"><div id="joystick" aria-label="Joystick de movimento"><i></i></div><div><button id="touchJump" aria-label="Pular">↑</button><button id="touchInteract" aria-label="Interagir">E</button></div></div></div>
 <section id="intro">
  <div class="intro-top">
@@ -27,7 +27,7 @@
     <div class="intro-actions">
      <button id="startStory" class="primary" disabled>Preparando personagem…</button>
      <button id="startFree" disabled>Explorar livremente</button>
-     <button id="startHistoric" disabled>Visitar o Centro Histórico</button>
+     <button id="startHistoric" disabled>Explorar a Avenida Prestes Maia</button>
     </div>
    </div>
   </div>
@@ -48,11 +48,11 @@
   </section>
  </div>
 </section>
-<dialog id="menuDialog"><div class="dialog-head"><h2>Sua vida na cidade</h2><button data-close="menuDialog" aria-label="Fechar menu">✕</button></div><button id="regionButton">Trocar de região</button><button id="transportButton">Carro, metrô e túneis</button><button id="labButton">Laboratório de lojas e interiores</button><button id="customizeButton">Personalizar personagem</button><button id="modeButton">Alternar história / modo livre</button><button id="cameraButton" aria-pressed="false">Vista panorâmica</button><button id="recoverButton">Voltar ao ponto inicial</button><label>Qualidade<select id="quality"><option value="high">Alta · computador</option><option value="balanced">Equilibrada</option><option value="low">Leve · celular</option></select></label><p>Esta versão é exclusivamente solo. NPCs e progresso funcionam no navegador.</p><button id="cityInfoButton">Situação da cidade real</button></dialog>
+<dialog id="menuDialog"><div class="dialog-head"><h2>Sua vida na cidade</h2><button data-close="menuDialog" aria-label="Fechar menu">✕</button></div><button id="regionButton">Trocar de região</button><button id="transportButton">Carro, metrô e túneis</button><button id="labButton">Laboratório de lojas e interiores</button><button id="customizeButton">Personalizar personagem</button><button id="modeButton">Alternar história / modo livre</button><button id="cameraButton" aria-pressed="false">Vista panorâmica</button><button id="recoverButton">Voltar ao ponto inicial</button><p>Esta versão é exclusivamente solo. NPCs e progresso funcionam no navegador.</p><button id="cityInfoButton">Situação da cidade real</button></dialog>
 <dialog id="regionDialog" aria-labelledby="regionTitle"><div class="dialog-head"><h2 id="regionTitle">Para onde vamos?</h2><button data-close="regionDialog" aria-label="Fechar regiões">✕</button></div>
  <div class="region-choices">
   <button id="travelPaulista"><strong>Avenida Paulista</strong><span>Comece no MASP e explore a avenida de ponta a ponta.</span></button>
-  <button id="travelHistoric"><strong>Centro Histórico</strong><span>Comece na Praça da Sé e descubra os pontos turísticos no mapa.</span></button>
+  <button id="travelHistoric"><strong>Centro Histórico</strong><span>Chegue à Avenida Prestes Maia. A Praça da Sé e outros destinos estão no mapa.</span></button>
  </div>
  <p id="travelStatus" role="status" hidden></p>
 </dialog>

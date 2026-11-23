@@ -11,6 +11,8 @@ export function createSaoPauloSky() {
    horizon: {value: new T.Color('#c8dde9')},
    zenith: {value: new T.Color('#387bbd')},
    sunDirection: {value: new T.Vector3(-170,120,-80).normalize()},
+   daylight: {value: 1},
+   cloudTime: {value: 0},
   },
   vertexShader: `
    varying vec3 domeDirection;
@@ -25,6 +27,8 @@ export function createSaoPauloSky() {
    uniform vec3 horizon;
    uniform vec3 zenith;
    uniform vec3 sunDirection;
+   uniform float daylight;
+   uniform float cloudTime;
 
    float hash(vec2 cell) {
     vec3 p = fract(vec3(cell.xyx) * 0.1031);
@@ -57,12 +61,13 @@ export function createSaoPauloSky() {
     float towardSun = max(0.0, dot(ray, sunDirection));
     color += vec3(0.13, 0.088, 0.042) * pow(towardSun, 15.0);
 
-    vec2 cloudPoint = ray.xz / (elevation + 0.19) * 3.2 + vec2(24.1, 31.7);
+    vec2 cloudPoint = ray.xz / (elevation + 0.19) * 3.2 + vec2(24.1, 31.7) + vec2(cloudTime*.0018,cloudTime*.0005);
     float density = cloudDensity(cloudPoint);
     float cloud = smoothstep(0.49, 0.68, density) * smoothstep(0.015, 0.14, elevation);
     float shading = smoothstep(0.48, 0.78, density + towardSun * 0.11);
     vec3 cloudColor = mix(vec3(0.57, 0.65, 0.73), vec3(0.96, 0.96, 0.93), shading);
-    color = mix(color, cloudColor, cloud * 0.93);
+    cloudColor *= mix(vec3(.09,.12,.18), vec3(1.0), daylight);
+    color = mix(color, cloudColor, cloud * 0.89);
 
     float solarDisc = smoothstep(0.99995, 0.99999, towardSun) * smoothstep(0.01, 0.07, elevation);
     color += vec3(2.1, 1.8, 1.4) * solarDisc;

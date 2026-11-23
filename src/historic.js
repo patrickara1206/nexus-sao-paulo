@@ -1,6 +1,8 @@
 import * as T from 'three';
 import {segmentDistance} from './geography.js';
-import {pbrMaterial} from './lab.js';
+import {addPrestesMarkings,createCityMaterials,createPrestesDetails,facadeSeed,facadeUV,isPrestesMaia,sidewalkSides} from './CityBuilder.js';
+import {CURB_METERS,loadHistoricGeo} from './GeoMapBuilder.js';
+import {createUrbanPropsAndTransit} from './UrbanPropsAndTransit.js';
 import {createTrees} from './trees.js';
 import {addHistoricLandmarks, landmarkViews} from './historic-landmarks.js';
 import {addHistoricScenery} from './historic-scenery.js';
@@ -58,56 +60,47 @@ export function historicTerrain({terrain, bounds}) {
  return {elevations, sample};
 }
 
-function materials() {
- const street = pbrMaterial('asphalt_02', 1), paving = pbrMaterial('concrete_pavement', 1);
- street.color.set('#777c7c');
- paving.color.set('#c5b8ab');
- street.side = paving.side = T.DoubleSide;
- return {
-  street, paving,
-  ground: new T.MeshStandardMaterial({color:'#8b8779',roughness:.99}),
-  park: new T.MeshStandardMaterial({color:'#586448',roughness:.98,side:T.DoubleSide}),
-  water: new T.MeshStandardMaterial({color:'#587a7d',roughness:.41,metalness:.18,side:T.DoubleSide}),
-  wall: new T.MeshStandardMaterial({vertexColors:true,roughness:.94,side:T.DoubleSide}),
-  roof: new T.MeshStandardMaterial({vertexColors:true,roughness:.98,side:T.DoubleSide}),
- };
-}
-
 function meshBatches(root, materials) {
  const batches = new Map();
  function batch(kind, x, z) {
   const key = `${kind}:${Math.floor(x/tile)},${Math.floor(z/tile)}`;
-  if (!batches.has(key)) batches.set(key,{kind, positions:[], uv:[], colors:[]});
+  if (!batches.has(key)) batches.set(key,{kind, positions:[], uv:[], colors:[],facades:[]});
   return batches.get(key);
  }
- function triangle(out, a, b, c, color) {
-  for (const point of [a,b,c]) {
+ function triangle(out, a, b, c, color,uvs,facade) {
+  for (const [i,point] of [a,b,c].entries()) {
    out.positions.push(...point);
-   out.uv.push(point[0] / 4, point[2] / 4);
+   out.uv.push(...(uvs?.[i]??[point[0]/4,point[2]/4]));
    if (color) out.colors.push(color.r,color.g,color.b);
+   if (facade) out.facades.push(...facade);
   }
  }
  function quad(out, a,b,c,d,color) {
   triangle(out,a,b,c,color);
   triangle(out,a,c,d,color);
  }
+ function wall(out, points, color, uvs, profile) {
+  triangle(out, points[0],points[1],points[2],color,[uvs[0],uvs[1],uvs[2]],profile);
+  triangle(out, points[0],points[2],points[3],color,[uvs[0],uvs[2],uvs[3]],profile);
+ }
  function finish() {
-  for (const [key, {kind,positions,uv,colors}] of batches) {
+  for (const [key, {kind,positions,uv,colors,facades}] of batches) {
    if (!positions.length) continue;
    const geo = new T.BufferGeometry();
    geo.setAttribute('position',new T.Float32BufferAttribute(positions,3));
    geo.setAttribute('uv',new T.Float32BufferAttribute(uv,2));
    if (colors.length) geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));
+   if (facades.length) geo.setAttribute('facade',new T.Float32BufferAttribute(facades,4));
    geo.computeVertexNormals();
    const mesh = new T.Mesh(geo,materials[kind]);
    mesh.name = 'Centro · ' + key;
-   mesh.castShadow = kind === 'wall' || kind === 'roof';
+   mesh.castShadow = ['wall','brick','tile','roof'].includes(kind);
    mesh.receiveShadow = true;
    root.add(mesh);
   }
   batches.clear();
  }
- return {batch, triangle, quad, finish};
+ return {batch, triangle, quad, wall, finish};
 }
 
 function createGround(data, elevations, material) {
@@ -193,17 +186,33 @@ function collisionIndex({buildings,trees,bounds}) {
  return {colliders,canMove};
 }
 
-function addBuilding(batch,building,terrainHeight){
+function addBuilding(batch,building,terrainHeight,details){
  const points=building.rings[0],{x,z}=polygonBounds(points);
  const floor=terrainHeight(x,z),top=floor+building.h;
- const walls=batch.batch('wall',x,z), roof=batch.batch('roof',x,z);
- const neutral=new T.Color().setHSL(.09+(building.id%5)*.02,.055+(building.id%9)*.01,.32+(building.id%13)*.012);
+ const tags=building.tags??{};
+ const cladding=building.material??tags['building:material'];
+ const nearAvenue=x>1980&&x<2400&&z> -2980&&z< -1900;
+ const variant=cladding==='brick'?'brick':cladding==='tiles'?'tile':
+  nearAvenue&&building.id%9===0?'brick':nearAvenue&&building.id%7===0?'tile':'wall';
+ const walls=batch.batch(variant,x,z),roof=batch.batch('roof',x,z);
+ const seed=facadeSeed(building.id);
+ const neutral=new T.Color().setHSL(.085+seed*.12,.06+seed*.10,.49+seed*.17);
  const topColor=neutral.clone().multiplyScalar(.84);
+ const levels=Number(building.levels??tags['building:levels']);
+ const floorHeight=levels>0?T.MathUtils.clamp(building.h/levels,2.65,4.4):3.2;
  for(const ring of building.rings){
   for(let i=0;i<ring.length;i++){
-   const [ax,az]=ring[i],[bx,bz]=ring[(i+1)%ring.length];
-   const baseA=Math.min(terrainHeight(ax,az)-.18,top-.6),baseB=Math.min(terrainHeight(bx,bz)-.18,top-.6);
-   batch.quad(walls,[ax,baseA,az],[bx,baseB,bz],[bx,top,bz],[ax,top,az],neutral);
+   const a=ring[i],b=ring[(i+1)%ring.length];
+   const [ax,az]=a,[bx,bz]=b;
+   const width=Math.hypot(bx-ax,bz-az);
+   if(width<.035)continue;
+   const minimum=building.minHeight??0;
+   const baseA=minimum?floor+minimum:Math.min(terrainHeight(ax,az)-.18,top-.6);
+   const baseB=minimum?floor+minimum:Math.min(terrainHeight(bx,bz)-.18,top-.6);
+   const shop=details.handleWall(a,b,baseA,baseB,floor,building);
+   const quad=[[ax,baseA,az],[bx,baseB,bz],[bx,top,bz],[ax,top,az]];
+   const blank=building.kind==='roof'||building.kind==='garage';
+   batch.wall(walls,quad,neutral,facadeUV(width,floor,quad),[blank?0:width,seed,Number(shop),floorHeight]);
   }
  }
  for(const triangle of ringTriangles(building.rings)){
@@ -232,16 +241,18 @@ function addSurface(batch,surface,terrainHeight){
 
 function addRoad(batch,road,terrainHeight){
  if(road.bridge)return;
- const kind=footways.has(road.kind)?'paving':'street';
- const sidewalk=kind==='street'&&road.kind!=='motorway'&&road.kind!=='trunk'&&road.kind!=='service';
+ const kind=road.kind==='cycleway'?'cyclePaint':footways.has(road.kind)?'paving':'street';
+ const sidewalks=kind==='street'?sidewalkSides(road):[];
+ const formalCurb=isPrestesMaia(road)&&sidewalks.length>0;
  const half=road.width*.5;
  for(let i=1;i<road.points.length;i++){
   const [x,z]=road.points[i-1],[ex,ez]=road.points[i];
   const dx=ex-x,dz=ez-z,length=Math.hypot(dx,dz);
   if(length<.08)continue;
-  const nx=dz/length,nz=-dx/length,parts=Math.ceil(length/5);
+  const nx=-dz/length,nz=dx/length,parts=Math.ceil(length/(formalCurb?2.5:5));
   const surface=batch.batch(kind,(x+ex)*.5,(z+ez)*.5);
-  const shoulder=sidewalk?batch.batch('paving',(x+ex)*.5,(z+ez)*.5):null;
+  const shoulder=sidewalks.length?batch.batch('paving',(x+ex)*.5,(z+ez)*.5):null;
+  const curb=formalCurb?batch.batch('curb',(x+ex)*.5,(z+ez)*.5):null;
   function point(progress,offset,y){
    const px=x+dx*progress+nx*offset,pz=z+dz*progress+nz*offset;
    return [px,terrainHeight(px,pz)+y,pz];
@@ -250,9 +261,15 @@ function addRoad(batch,road,terrainHeight){
    const a=part/parts,b=(part+1)/parts,offset=kind==='street'?.105:.118;
    batch.quad(surface,point(a,-half,offset),point(a,half,offset),point(b,half,offset),point(b,-half,offset));
    if(shoulder){
-    for(const side of [-1,1]){
-     const inner=side*half,outer=side*(half+1.6);
-     batch.quad(shoulder,point(a,inner,.16),point(a,outer,.16),point(b,outer,.16),point(b,inner,.16));
+    for(const side of sidewalks){
+     const width=road.sidewalks?.[side===-1?'left':'right']?.width??(formalCurb?2.8:1.6);
+     const inner=side*half,outer=side*(half+width),walkY=formalCurb?.105+CURB_METERS:.16;
+     batch.quad(shoulder,point(a,inner,walkY),point(a,outer,walkY),point(b,outer,walkY),point(b,inner,walkY));
+     if(curb){
+      batch.quad(curb,point(a,inner,.105),point(b,inner,.105),point(b,inner,walkY),point(a,inner,walkY));
+      const edge=inner+.18*side;
+      batch.quad(curb,point(a,inner,walkY+.008),point(a,edge,walkY+.008),point(b,edge,walkY+.008),point(b,inner,walkY+.008));
+     }
     }
    }
   }
@@ -282,10 +299,11 @@ function safeView(x,z,canMove,lookX,lookZ,bounds) {
 }
 
 export function historicDestinations(data,groundHeight,canMove) {
- return data.pois.flatMap(point=>{
+ const avenue={id:'prestes-maia',name:'Avenida Prestes Maia',sourceId:8579810,anchor:[2199,-2216]};
+ return [...data.pois,...(data.roads.some(road=>road.id===avenue.sourceId)?[avenue]:[])].flatMap(point=>{
   const object=data.buildings.find(item=>item.id===point.sourceId)??data.surfaces.find(item=>item.id===point.sourceId);
   const fallback=object?polygonBounds(object.rings[0]):{x:point.anchor[0],z:point.anchor[1]};
-  const view=landmarkViews[point.id];
+  const view=point===avenue?{target:[2242,-2280],camera:[2201,-2218],pitch:-.12}:landmarkViews[point.id];
   const [x,z]=view?.target??[fallback.x,fallback.z];
   const [vx,vz]=view?.camera??point.anchor;
   const stand=safeView(vx,vz,canMove,x,z,data.bounds);
@@ -299,31 +317,41 @@ export function historicDestinations(data,groundHeight,canMove) {
 export async function createHistoric(scene){
  const response=await fetch('/data/historic.json');
  if(!response.ok)throw new Error('Erro ao carregar o mapa do Centro Histórico.');
- const data=await response.json();
+ const geo=await loadHistoricGeo(await response.json());
+ const {data,features}=geo;
  const root=new T.Group();
  root.name='Centro Histórico de São Paulo';
  root.visible=false;
- const mats=materials();
+ const mats=createCityMaterials();
  const {elevations,sample}=historicTerrain(data);
  const terrainFloor=(x,z)=>sample(x,z)+.145;
  const {colliders,canMove}=collisionIndex(data);
  const batches=meshBatches(root,mats);
+ const details=createPrestesDetails(root,data.roads);
  root.add(createGround(data,elevations,mats.ground));
  const {suppressedBuildingIds}=addHistoricLandmarks(root,terrainFloor,data);
  const scenery=addHistoricScenery(root,terrainFloor,data);
  const floor=(x,z,y)=>scenery.groundHeightAt(x,z,y)??terrainFloor(x,z);
  for(const building of data.buildings){
-  if(!suppressedBuildingIds.has(building.id)&&!scenery.suppressedBuildingIds.has(building.id))addBuilding(batches,building,sample);
+  if(!suppressedBuildingIds.has(building.id)&&!scenery.suppressedBuildingIds.has(building.id))addBuilding(batches,building,sample,details);
  }
  for(const surface of data.surfaces)addSurface(batches,surface,sample);
  for(const road of data.roads)if(!scenery.suppressedRoadIds.has(road.id))addRoad(batches,road,sample);
+ addPrestesMarkings(batches,data.roads,features,sample);
  batches.finish();
+ details.finish();
 
  const flora=createTrees(data.trees.map(([x,z,height])=>({x,z,height,mapped:true})),terrainFloor);
  root.add(flora.root,createSePalms(terrainFloor));
+ const props=createUrbanPropsAndTransit(root,{features,roads:data.roads,groundHeight:floor,canMove});
+ const updateDetail=(player,quality,daylight=1,time=0)=>{
+  details.update(player,quality);
+  props.update({player,quality,daylight,time});
+ };
  const pois=historicDestinations(data,floor,canMove);
  const spawn=pois.find(point=>point.id==='se')?.spawn;
  if(!spawn)throw new Error('A saída da Praça da Sé ficou bloqueada.');
  scene.add(root);
- return {root,bounds:data.bounds,colliders,canMove,groundHeight:floor,pois,spawn,streets:data.roads,ready:flora.ready};
+ return {root,bounds:data.bounds,colliders,canMove,groundHeight:floor,pois,spawn,streets:data.roads,
+  geo,props,updateDetail,ready:flora.ready};
 }
